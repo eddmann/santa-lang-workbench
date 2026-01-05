@@ -9,7 +9,7 @@ import {
 } from "@heroicons/react/20/solid";
 
 export function OutputPanel() {
-  const { status, result, consoleOutput, mode } = useAppSelector(
+  const { status, result, consoleOutput } = useAppSelector(
     (state) => state.execution
   );
 
@@ -61,7 +61,7 @@ export function OutputPanel() {
         </div>
         {result && (
           <span className="text-xs text-[var(--color-text-muted)] font-medium uppercase tracking-wide">
-            {result.type}{mode === "test" ? " Tests" : ""}
+            {result.type === "test" ? "Tests" : result.type === "solution" ? "Solution" : "Script"}
           </span>
         )}
       </div>
