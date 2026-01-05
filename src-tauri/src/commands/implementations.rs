@@ -71,31 +71,34 @@ fn detect_implementation_info(path: &PathBuf) -> Result<(String, String, String)
     let version_str = String::from_utf8_lossy(&output.stdout);
     let version_str = version_str.trim();
 
-    // Parse version output like "santa-lang-comet 0.0.13" or "Comet 0.0.13"
     let parts: Vec<&str> = version_str.split_whitespace().collect();
 
-    if parts.len() >= 2 {
-        let name_part = parts[0].to_lowercase();
-        let version = parts[1].to_string();
-
-        let (name, codename) = if name_part.contains("comet") || name_part == "comet" {
-            ("Comet".to_string(), "comet".to_string())
-        } else if name_part.contains("blitzen") || name_part == "blitzen" {
-            ("Blitzen".to_string(), "blitzen".to_string())
-        } else if name_part.contains("dasher") || name_part == "dasher" {
-            ("Dasher".to_string(), "dasher".to_string())
-        } else if name_part.contains("donner") || name_part == "donner" {
-            ("Donner".to_string(), "donner".to_string())
-        } else if name_part.contains("prancer") || name_part == "prancer" {
-            ("Prancer".to_string(), "prancer".to_string())
-        } else if name_part.contains("vixen") || name_part == "vixen" {
-            ("Vixen".to_string(), "vixen".to_string())
-        } else {
-            ("Unknown".to_string(), "unknown".to_string())
-        };
-
-        Ok((name, codename, version))
+    // Handle both formats:
+    // - 3 parts: "santa-lang Comet 0.0.13" (name_part at [1], version at [2])
+    // - 2 parts: "Comet 0.0.13" or "santa-lang-comet 0.0.13" (name_part at [0], version at [1])
+    let (name_part, version) = if parts.len() >= 3 && parts[0] == "santa-lang" {
+        (parts[1].to_lowercase(), parts[2].to_string())
+    } else if parts.len() >= 2 {
+        (parts[0].to_lowercase(), parts[1].to_string())
     } else {
-        Err("Could not parse version output".to_string())
-    }
+        return Err("Could not parse version output".to_string());
+    };
+
+    let (name, codename) = if name_part.contains("comet") || name_part == "comet" {
+        ("Comet".to_string(), "comet".to_string())
+    } else if name_part.contains("blitzen") || name_part == "blitzen" {
+        ("Blitzen".to_string(), "blitzen".to_string())
+    } else if name_part.contains("dasher") || name_part == "dasher" {
+        ("Dasher".to_string(), "dasher".to_string())
+    } else if name_part.contains("donner") || name_part == "donner" {
+        ("Donner".to_string(), "donner".to_string())
+    } else if name_part.contains("prancer") || name_part == "prancer" {
+        ("Prancer".to_string(), "prancer".to_string())
+    } else if name_part.contains("vixen") || name_part == "vixen" {
+        ("Vixen".to_string(), "vixen".to_string())
+    } else {
+        ("Unknown".to_string(), "unknown".to_string())
+    };
+
+    Ok((name, codename, version))
 }
