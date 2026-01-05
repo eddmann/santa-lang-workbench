@@ -1,3 +1,4 @@
+import { useMemo } from "react";
 import { useAppDispatch, useAppSelector } from "../store";
 import { startExecution, cancelExecution, resetExecution } from "../store/slices/executionSlice";
 import { selectImplementation } from "../store/slices/implementationsSlice";
@@ -24,6 +25,33 @@ export function Toolbar() {
 
   const activeTab = tabs.find((t) => t.id === activeTabId);
   const isRunning = status === "running";
+
+  // Derive selected implementation and available codenames/versions
+  const selectedImpl = implementations.find((i) => i.id === selectedId);
+  const selectedCodename = selectedImpl?.codename || null;
+
+  // Group implementations by codename
+  const implsByCodename = useMemo(() => {
+    const grouped: Record<string, typeof implementations> = {};
+    for (const impl of implementations) {
+      if (!grouped[impl.codename]) {
+        grouped[impl.codename] = [];
+      }
+      grouped[impl.codename].push(impl);
+    }
+    return grouped;
+  }, [implementations]);
+
+  const codenames = Object.keys(implsByCodename);
+  const versionsForCodename = selectedCodename ? implsByCodename[selectedCodename] || [] : [];
+
+  const handleCodenameChange = (codename: string) => {
+    // Select the first version for this codename
+    const firstImpl = implsByCodename[codename]?.[0];
+    if (firstImpl) {
+      dispatch(selectImplementation(firstImpl.id));
+    }
+  };
 
   const handleRun = () => {
     if (!activeTab || !selectedId) return;
@@ -147,29 +175,55 @@ export function Toolbar() {
         {/* Divider */}
         <div className="w-px h-5 bg-[var(--color-border)] mx-2" />
 
-        {/* Implementation Selector */}
-        <div className="relative">
-          <select
-            value={selectedId || ""}
-            onChange={(e) => dispatch(selectImplementation(e.target.value))}
-            className="appearance-none h-8 pl-3 pr-8 rounded-md text-sm font-medium
-                       bg-[var(--color-surface-elevated)] text-[var(--color-text-secondary)]
-                       border border-[var(--color-border)]
-                       hover:bg-[var(--color-surface-hover)] hover:text-[var(--color-text-primary)]
-                       focus:outline-none focus:ring-2 focus:ring-[var(--color-accent)] focus:ring-offset-1 focus:ring-offset-[var(--color-surface)]
-                       cursor-pointer transition-colors duration-150"
-          >
-            {implementations.length === 0 ? (
-              <option value="">No implementations</option>
-            ) : (
-              implementations.map((impl) => (
-                <option key={impl.id} value={impl.id}>
-                  {impl.name} {impl.version}
-                </option>
-              ))
-            )}
-          </select>
-          <ChevronDownIcon className="absolute right-2 top-1/2 -translate-y-1/2 w-4 h-4 text-[var(--color-text-muted)] pointer-events-none" />
+        {/* Implementation Selector - Two-tier */}
+        <div className="flex items-center gap-1.5">
+          {/* Codename selector */}
+          <div className="relative">
+            <select
+              value={selectedCodename || ""}
+              onChange={(e) => handleCodenameChange(e.target.value)}
+              className="appearance-none h-8 pl-3 pr-7 rounded-md text-sm font-medium
+                         bg-[var(--color-surface-elevated)] text-[var(--color-text-secondary)]
+                         border border-[var(--color-border)]
+                         hover:bg-[var(--color-surface-hover)] hover:text-[var(--color-text-primary)]
+                         focus:outline-none focus:ring-2 focus:ring-[var(--color-accent)] focus:ring-offset-1 focus:ring-offset-[var(--color-surface)]
+                         cursor-pointer transition-colors duration-150"
+            >
+              {codenames.length === 0 ? (
+                <option value="">No implementations</option>
+              ) : (
+                codenames.map((codename) => (
+                  <option key={codename} value={codename}>
+                    {implsByCodename[codename][0].name}
+                  </option>
+                ))
+              )}
+            </select>
+            <ChevronDownIcon className="absolute right-1.5 top-1/2 -translate-y-1/2 w-4 h-4 text-[var(--color-text-muted)] pointer-events-none" />
+          </div>
+
+          {/* Version selector */}
+          {versionsForCodename.length > 0 && (
+            <div className="relative">
+              <select
+                value={selectedId || ""}
+                onChange={(e) => dispatch(selectImplementation(e.target.value))}
+                className="appearance-none h-8 pl-2.5 pr-6 rounded-md text-sm font-mono
+                           bg-[var(--color-surface-elevated)] text-[var(--color-text-muted)]
+                           border border-[var(--color-border)]
+                           hover:bg-[var(--color-surface-hover)] hover:text-[var(--color-text-primary)]
+                           focus:outline-none focus:ring-2 focus:ring-[var(--color-accent)] focus:ring-offset-1 focus:ring-offset-[var(--color-surface)]
+                           cursor-pointer transition-colors duration-150"
+              >
+                {versionsForCodename.map((impl) => (
+                  <option key={impl.id} value={impl.id}>
+                    {impl.version}
+                  </option>
+                ))}
+              </select>
+              <ChevronDownIcon className="absolute right-1 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-[var(--color-text-muted)] pointer-events-none" />
+            </div>
+          )}
         </div>
       </div>
 

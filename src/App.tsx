@@ -1,6 +1,6 @@
 import { useEffect } from "react";
 import { Provider } from "react-redux";
-import { store, useAppDispatch } from "./store";
+import { store, useAppDispatch, useAppSelector } from "./store";
 import { loadImplementations } from "./store/slices/implementationsSlice";
 import { loadSettings } from "./store/slices/settingsSlice";
 import { Toolbar } from "./components/Toolbar";
@@ -9,14 +9,26 @@ import { Editor } from "./components/Editor";
 import { OutputPanel } from "./components/OutputPanel";
 import { SettingsModal } from "./components/SettingsModal";
 import { StatusBar } from "./components/StatusBar";
+import { getTheme, applyTheme } from "./lib/themes";
+import { useMenuEvents } from "./hooks/useMenuEvents";
 
 function AppContent() {
   const dispatch = useAppDispatch();
+  const { settings } = useAppSelector((state) => state.settings);
 
   useEffect(() => {
     dispatch(loadImplementations());
     dispatch(loadSettings());
   }, [dispatch]);
+
+  // Apply theme when settings change
+  useEffect(() => {
+    const theme = getTheme(settings.theme);
+    applyTheme(theme);
+  }, [settings.theme]);
+
+  // Handle native menu events
+  useMenuEvents();
 
   return (
     <div className="h-screen flex flex-col bg-[var(--color-background)]">

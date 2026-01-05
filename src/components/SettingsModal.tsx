@@ -18,8 +18,11 @@ import {
   Cog6ToothIcon,
   CloudArrowDownIcon,
   KeyIcon,
+  CheckCircleIcon,
+  SwatchIcon,
 } from "@heroicons/react/20/solid";
 import type { Settings, Release } from "../lib/types";
+import { themes, applyTheme, getTheme } from "../lib/themes";
 
 const CODENAMES = [
   { id: "comet", name: "Comet", desc: "Rust tree-walking interpreter", color: "text-orange-400" },
@@ -42,7 +45,7 @@ export function SettingsModal() {
     "implementations"
   );
   const [selectedCodename, setSelectedCodename] = useState<string | null>(null);
-  const [isDownloading, setIsDownloading] = useState(false);
+  const [downloadingRelease, setDownloadingRelease] = useState<string | null>(null);
 
   useEffect(() => {
     setLocalSettings(settings);
@@ -55,6 +58,8 @@ export function SettingsModal() {
   if (!isModalOpen) return null;
 
   const handleClose = () => {
+    // Revert to saved theme if user cancels
+    applyTheme(getTheme(settings.theme));
     dispatch(closeSettingsModal());
   };
 
@@ -91,20 +96,35 @@ export function SettingsModal() {
 
   const handleDownload = async (
     codename: string,
-    _release: Release,
+    release: Release,
     assetName: string,
     assetUrl: string
   ) => {
-    setIsDownloading(true);
+    setDownloadingRelease(release.tag_name);
     try {
       await dispatch(
         downloadImplementation({ codename, assetUrl, assetName })
       ).unwrap();
-      setSelectedCodename(null);
     } catch (e) {
       console.error("Failed to download:", e);
     }
-    setIsDownloading(false);
+    setDownloadingRelease(null);
+  };
+
+  // Check if a release version is already installed
+  const isReleaseInstalled = (codename: string, release: Release) => {
+    const version = release.tag_name.replace(/^v/, "");
+    return implementations.some(
+      (impl) => impl.codename === codename && impl.version === version
+    );
+  };
+
+  // Get the installed implementation for a release (for deletion)
+  const getInstalledImpl = (codename: string, release: Release) => {
+    const version = release.tag_name.replace(/^v/, "");
+    return implementations.find(
+      (impl) => impl.codename === codename && impl.version === version
+    );
   };
 
   const getPlatformAsset = (release: Release) => {
@@ -290,6 +310,8 @@ export function SettingsModal() {
                       <div className="space-y-2 max-h-52 overflow-auto">
                         {releases[selectedCodename].slice(0, 5).map((release) => {
                           const asset = getPlatformAsset(release);
+                          const installed = isReleaseInstalled(selectedCodename, release);
+                          const installedImpl = installed ? getInstalledImpl(selectedCodename, release) : null;
                           return (
                             <div
                               key={release.tag_name}
@@ -305,7 +327,23 @@ export function SettingsModal() {
                                   {new Date(release.published_at).toLocaleDateString()}
                                 </p>
                               </div>
-                              {asset ? (
+                              {installed && installedImpl ? (
+                                <div className="flex items-center gap-2">
+                                  <span className="flex items-center gap-1.5 text-sm text-[var(--color-success)]">
+                                    <CheckCircleIcon className="w-4 h-4" />
+                                    Installed
+                                  </span>
+                                  <button
+                                    onClick={() => handleRemove(installedImpl.id)}
+                                    className="p-2 text-[var(--color-text-muted)]
+                                             hover:text-[var(--color-error)] hover:bg-[var(--color-error-glow)]
+                                             rounded-lg transition-colors duration-150"
+                                    title="Remove this version"
+                                  >
+                                    <TrashIcon className="w-4 h-4" />
+                                  </button>
+                                </div>
+                              ) : asset ? (
                                 <button
                                   onClick={() =>
                                     handleDownload(
@@ -315,7 +353,7 @@ export function SettingsModal() {
                                       asset.browser_download_url
                                     )
                                   }
-                                  disabled={isDownloading}
+                                  disabled={downloadingRelease !== null}
                                   className="flex items-center gap-2 px-4 py-2
                                            bg-[var(--color-accent)] text-[#0f1419] font-medium
                                            rounded-lg text-sm
@@ -323,7 +361,7 @@ export function SettingsModal() {
                                            disabled:opacity-50 disabled:cursor-not-allowed
                                            transition-all duration-150"
                                 >
-                                  {isDownloading ? (
+                                  {downloadingRelease === release.tag_name ? (
                                     <div className="w-4 h-4 border-2 border-current border-t-transparent rounded-full animate-spin" />
                                   ) : (
                                     <ArrowDownTrayIcon className="w-4 h-4" />
@@ -353,6 +391,58 @@ export function SettingsModal() {
 
           {activeTab === "general" && (
             <div className="space-y-6">
+              {/* Theme Selection */}
+              <div>
+                <label className="flex items-center gap-2 text-sm font-semibold text-[var(--color-text-secondary)] mb-3">
+                  <SwatchIcon className="w-4 h-4" />
+                  Theme
+                </label>
+                <div className="grid grid-cols-2 gap-3">
+                  {themes.map((theme) => (
+                    <button
+                      key={theme.id}
+                      onClick={() => {
+                        setLocalSettings({ ...localSettings, theme: theme.id });
+                        applyTheme(theme);
+                      }}
+                      className={`p-4 text-left rounded-lg border transition-all duration-200 ${
+                        localSettings.theme === theme.id
+                          ? "border-[var(--color-accent)] bg-[var(--color-accent-glow)]"
+                          : "border-[var(--color-border-subtle)] hover:border-[var(--color-border)] bg-[var(--color-background)]"
+                      }`}
+                    >
+                      <div className="flex items-center gap-2">
+                        <div
+                          className="w-4 h-4 rounded-full border border-[var(--color-border)]"
+                          style={{ backgroundColor: theme.colors["--color-accent"] }}
+                        />
+                        <span className="font-semibold text-[var(--color-text-primary)]">
+                          {theme.name}
+                        </span>
+                        {localSettings.theme === theme.id && (
+                          <span className="w-1.5 h-1.5 rounded-full bg-[var(--color-accent)]" />
+                        )}
+                      </div>
+                      <div className="flex gap-1 mt-2">
+                        <div
+                          className="w-6 h-3 rounded-sm"
+                          style={{ backgroundColor: theme.colors["--color-background"] }}
+                        />
+                        <div
+                          className="w-6 h-3 rounded-sm"
+                          style={{ backgroundColor: theme.colors["--color-surface"] }}
+                        />
+                        <div
+                          className="w-6 h-3 rounded-sm"
+                          style={{ backgroundColor: theme.colors["--color-surface-elevated"] }}
+                        />
+                      </div>
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              {/* AoC Session Token */}
               <div>
                 <label className="flex items-center gap-2 text-sm font-semibold text-[var(--color-text-secondary)] mb-3">
                   <KeyIcon className="w-4 h-4" />

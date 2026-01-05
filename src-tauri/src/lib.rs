@@ -1,8 +1,9 @@
 mod commands;
 mod config;
+mod menu;
 mod state;
 
-use tauri::Manager;
+use tauri::{Emitter, Manager};
 
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
@@ -14,6 +15,16 @@ pub fn run() {
         .setup(|app| {
             let state = state::AppState::load(app.handle())?;
             app.manage(std::sync::Mutex::new(state));
+
+            // Create and set native menu
+            let menu = menu::create_menu(app.handle())?;
+            app.set_menu(menu)?;
+
+            // Handle menu events by emitting to frontend
+            app.on_menu_event(|app_handle, event| {
+                let _ = app_handle.emit("menu-event", event.id().0.as_str());
+            });
+
             Ok(())
         })
         .invoke_handler(tauri::generate_handler![
