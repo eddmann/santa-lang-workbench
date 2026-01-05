@@ -3273,7 +3273,7 @@ dependencies = [
 ]
 
 [[package]]
-name = "santa-lang-studio"
+name = "santa-lang-toy-shop"
 version = "0.1.0"
 dependencies = [
  "dirs",

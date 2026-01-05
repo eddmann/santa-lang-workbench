@@ -62,15 +62,13 @@ export function StatusBar() {
       </div>
 
       {/* Right section */}
-      <div className="flex items-center gap-3 text-[var(--color-text-muted)]">
+      <div className="flex items-center text-[var(--color-text-muted)] min-w-0">
         {activeTab?.path && (
-          <div className="flex items-center gap-1.5">
-            <DocumentIcon className="w-3.5 h-3.5 text-[var(--color-text-faint)]" />
-            <span className="truncate max-w-xs">{activeTab.path}</span>
+          <div className="flex items-center gap-1.5 min-w-0">
+            <DocumentIcon className="w-3.5 h-3.5 text-[var(--color-text-faint)] flex-shrink-0" />
+            <span className="truncate">{activeTab.path}</span>
           </div>
         )}
-        <div className="w-px h-3 bg-[var(--color-border-subtle)]" />
-        <span className="font-medium text-[var(--color-accent)]">Santa Lang</span>
       </div>
     </div>
   );

@@ -1,8 +1,8 @@
 {
   "$schema": "https://schema.tauri.app/config/2",
-  "productName": "santa-lang Studio",
+  "productName": "santa-lang Toy Shop",
   "version": "0.1.0",
-  "identifier": "com.eddmann.santa-lang-studio",
+  "identifier": "com.eddmann.santa-lang-toy-shop",
   "build": {
     "beforeDevCommand": "bun run dev",
     "devUrl": "http://localhost:5173",
@@ -13,7 +13,7 @@
     "withGlobalTauri": true,
     "windows": [
       {
-        "title": "santa-lang Studio",
+        "title": "santa-lang Toy Shop",
         "width": 1200,
         "height": 800,
         "resizable": true,
