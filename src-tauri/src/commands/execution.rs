@@ -65,11 +65,9 @@ pub async fn run_execution(
         cmd.current_dir(dir);
     }
 
-    // Set AoC session token if available and non-empty
+    // Set AoC session token if available
     if let Some(token) = aoc_token {
-        if !token.trim().is_empty() {
-            cmd.env("SANTA_CLI_SESSION_TOKEN", token);
-        }
+        cmd.env("SANTA_CLI_SESSION_TOKEN", token);
     }
 
     let mut child = cmd.spawn().map_err(|e| format!("Failed to spawn process: {}", e))?;
