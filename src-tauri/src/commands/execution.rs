@@ -110,6 +110,15 @@ pub async fn run_execution(
                     };
 
                     let _ = window.emit("execution-event", &event);
+                } else {
+                    // Non-JSON lines are console output (from puts())
+                    let _ = window.emit(
+                        "execution-event",
+                        ExecutionEvent {
+                            event_type: "console".to_string(),
+                            data: serde_json::json!({ "message": line }),
+                        },
+                    );
                 }
             }
             Err(e) => {

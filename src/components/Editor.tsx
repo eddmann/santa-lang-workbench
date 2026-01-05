@@ -1,9 +1,9 @@
 import MonacoEditor from "@monaco-editor/react";
 import { useAppDispatch, useAppSelector } from "../store";
 import { updateTabContent } from "../store/slices/tabsSlice";
-import { startExecution } from "../store/slices/executionSlice";
+import { startExecution, resetExecution } from "../store/slices/executionSlice";
 import type { editor } from "monaco-editor";
-import { useRef, useCallback } from "react";
+import { useRef, useCallback, useEffect } from "react";
 
 export function Editor() {
   const dispatch = useAppDispatch();
@@ -13,37 +13,57 @@ export function Editor() {
 
   const activeTab = tabs.find((t) => t.id === activeTabId);
 
+  // Use refs to store latest values for keyboard shortcuts
+  // This prevents stale closure issues since Monaco commands are only registered once
+  const activeTabRef = useRef(activeTab);
+  const selectedIdRef = useRef(selectedId);
+
+  useEffect(() => {
+    activeTabRef.current = activeTab;
+  }, [activeTab]);
+
+  useEffect(() => {
+    selectedIdRef.current = selectedId;
+  }, [selectedId]);
+
   const handleEditorMount = useCallback(
     (editor: editor.IStandaloneCodeEditor, monaco: typeof import("monaco-editor")) => {
       editorRef.current = editor;
 
-      // Add keyboard shortcuts
+      // Run command (Cmd+Enter)
       editor.addCommand(monaco.KeyMod.CtrlCmd | monaco.KeyCode.Enter, () => {
-        if (activeTab && selectedId) {
+        const tab = activeTabRef.current;
+        const implId = selectedIdRef.current;
+        if (tab && implId) {
+          dispatch(resetExecution());
           dispatch(
             startExecution({
-              implId: selectedId,
+              implId,
               source: editor.getValue(),
               mode: "run",
-              workingDir: activeTab.path
-                ? activeTab.path.substring(0, activeTab.path.lastIndexOf("/"))
+              workingDir: tab.path
+                ? tab.path.substring(0, tab.path.lastIndexOf("/"))
                 : undefined,
             })
           );
         }
       });
 
+      // Test command (Cmd+Shift+Enter)
       editor.addCommand(
         monaco.KeyMod.CtrlCmd | monaco.KeyMod.Shift | monaco.KeyCode.Enter,
         () => {
-          if (activeTab && selectedId) {
+          const tab = activeTabRef.current;
+          const implId = selectedIdRef.current;
+          if (tab && implId) {
+            dispatch(resetExecution());
             dispatch(
               startExecution({
-                implId: selectedId,
+                implId,
                 source: editor.getValue(),
                 mode: "test",
-                workingDir: activeTab.path
-                  ? activeTab.path.substring(0, activeTab.path.lastIndexOf("/"))
+                workingDir: tab.path
+                  ? tab.path.substring(0, tab.path.lastIndexOf("/"))
                   : undefined,
               })
             );
@@ -51,7 +71,7 @@ export function Editor() {
         }
       );
     },
-    [activeTab, selectedId, dispatch]
+    [dispatch]
   );
 
   const handleChange = useCallback(

@@ -104,7 +104,21 @@ export const executionSlice = createSlice({
       state.exitCode = null;
     },
     setInitialResult: (state, action: PayloadAction<ExecutionState>) => {
-      state.result = action.payload;
+      // Normalize script output format from CLI
+      // CLI returns: {type: "script", success: true/false, value, duration_ms}
+      // We need: {type: "script", status: "complete"/"error", value, duration_ms, error}
+      const payload = action.payload as unknown as Record<string, unknown>;
+      if (payload?.type === "script" && "success" in payload) {
+        state.result = {
+          type: "script",
+          status: payload.success ? "complete" : "error",
+          value: (payload.value as string) ?? null,
+          duration_ms: (payload.duration_ms as number) ?? null,
+          error: (payload.error as { message: string; location?: { line: number; column: number } }) ?? null,
+        };
+      } else {
+        state.result = action.payload;
+      }
     },
     applyResultPatch: (state, action: PayloadAction<Operation[]>) => {
       if (state.result) {
