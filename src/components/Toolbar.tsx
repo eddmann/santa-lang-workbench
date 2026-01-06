@@ -1,7 +1,7 @@
 import { useMemo } from "react";
 import { useAppDispatch, useAppSelector } from "../store";
 import { startExecution, cancelExecution, resetExecution } from "../store/slices/executionSlice";
-import { selectImplementation } from "../store/slices/implementationsSlice";
+import { selectReindeer } from "../store/slices/reindeerSlice";
 import { openSettingsModal } from "../store/slices/settingsSlice";
 import { addTab, saveTab } from "../store/slices/tabsSlice";
 import { open, save } from "@tauri-apps/plugin-dialog";
@@ -18,38 +18,38 @@ import {
 export function Toolbar() {
   const dispatch = useAppDispatch();
   const { tabs, activeTabId } = useAppSelector((state) => state.tabs);
-  const { implementations, selectedId } = useAppSelector(
-    (state) => state.implementations
+  const { reindeer, selectedId } = useAppSelector(
+    (state) => state.reindeer
   );
   const { status } = useAppSelector((state) => state.execution);
 
   const activeTab = tabs.find((t) => t.id === activeTabId);
   const isRunning = status === "running";
 
-  // Derive selected implementation and available codenames/versions
-  const selectedImpl = implementations.find((i) => i.id === selectedId);
-  const selectedCodename = selectedImpl?.codename || null;
+  // Derive selected reindeer and available codenames/versions
+  const selectedR = reindeer.find((r) => r.id === selectedId);
+  const selectedCodename = selectedR?.codename || null;
 
-  // Group implementations by codename
-  const implsByCodename = useMemo(() => {
-    const grouped: Record<string, typeof implementations> = {};
-    for (const impl of implementations) {
-      if (!grouped[impl.codename]) {
-        grouped[impl.codename] = [];
+  // Group reindeer by codename
+  const reindeerByCodename = useMemo(() => {
+    const grouped: Record<string, typeof reindeer> = {};
+    for (const r of reindeer) {
+      if (!grouped[r.codename]) {
+        grouped[r.codename] = [];
       }
-      grouped[impl.codename].push(impl);
+      grouped[r.codename].push(r);
     }
     return grouped;
-  }, [implementations]);
+  }, [reindeer]);
 
-  const codenames = Object.keys(implsByCodename);
-  const versionsForCodename = selectedCodename ? implsByCodename[selectedCodename] || [] : [];
+  const codenames = Object.keys(reindeerByCodename);
+  const versionsForCodename = selectedCodename ? reindeerByCodename[selectedCodename] || [] : [];
 
   const handleCodenameChange = (codename: string) => {
     // Select the first version for this codename
-    const firstImpl = implsByCodename[codename]?.[0];
-    if (firstImpl) {
-      dispatch(selectImplementation(firstImpl.id));
+    const firstR = reindeerByCodename[codename]?.[0];
+    if (firstR) {
+      dispatch(selectReindeer(firstR.id));
     }
   };
 
@@ -175,7 +175,7 @@ export function Toolbar() {
         {/* Divider */}
         <div className="w-px h-5 bg-[var(--color-border)] mx-2" />
 
-        {/* Implementation Selector - Two-tier */}
+        {/* Reindeer Selector - Two-tier */}
         <div className="flex items-center gap-1.5">
           {/* Codename selector */}
           <div className="relative">
@@ -190,11 +190,11 @@ export function Toolbar() {
                          cursor-pointer transition-colors duration-150"
             >
               {codenames.length === 0 ? (
-                <option value="">No implementations</option>
+                <option value="">No reindeer</option>
               ) : (
                 codenames.map((codename) => (
                   <option key={codename} value={codename}>
-                    {implsByCodename[codename][0].name}
+                    {reindeerByCodename[codename][0].name}
                   </option>
                 ))
               )}
@@ -207,7 +207,7 @@ export function Toolbar() {
             <div className="relative">
               <select
                 value={selectedId || ""}
-                onChange={(e) => dispatch(selectImplementation(e.target.value))}
+                onChange={(e) => dispatch(selectReindeer(e.target.value))}
                 className="appearance-none h-8 pl-2.5 pr-6 rounded-md text-sm font-mono
                            bg-[var(--color-surface-elevated)] text-[var(--color-text-muted)]
                            border border-[var(--color-border)]
@@ -215,9 +215,9 @@ export function Toolbar() {
                            focus:outline-none focus:ring-2 focus:ring-[var(--color-accent)] focus:ring-offset-1 focus:ring-offset-[var(--color-surface)]
                            cursor-pointer transition-colors duration-150"
               >
-                {versionsForCodename.map((impl) => (
-                  <option key={impl.id} value={impl.id}>
-                    {impl.version}
+                {versionsForCodename.map((r) => (
+                  <option key={r.id} value={r.id}>
+                    {r.version}
                   </option>
                 ))}
               </select>

@@ -1,4 +1,4 @@
-export interface Implementation {
+export interface Reindeer {
   id: string;
   name: string;
   codename: string;
@@ -8,7 +8,7 @@ export interface Implementation {
 
 export interface Settings {
   aoc_session_token: string | null;
-  default_implementation: string | null;
+  default_reindeer: string | null;
   theme: string;
 }
 

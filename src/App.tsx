@@ -1,7 +1,7 @@
 import { useEffect } from "react";
 import { Provider } from "react-redux";
 import { store, useAppDispatch, useAppSelector } from "./store";
-import { loadImplementations } from "./store/slices/implementationsSlice";
+import { loadReindeer } from "./store/slices/reindeerSlice";
 import { loadSettings } from "./store/slices/settingsSlice";
 import { Toolbar } from "./components/Toolbar";
 import { EditorTabs } from "./components/EditorTabs";
@@ -17,7 +17,7 @@ function AppContent() {
   const { settings } = useAppSelector((state) => state.settings);
 
   useEffect(() => {
-    dispatch(loadImplementations());
+    dispatch(loadReindeer());
     dispatch(loadSettings());
   }, [dispatch]);
 

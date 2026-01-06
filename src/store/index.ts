@@ -1,14 +1,14 @@
 import { configureStore } from "@reduxjs/toolkit";
 import { useDispatch, useSelector } from "react-redux";
 import tabsReducer from "./slices/tabsSlice";
-import implementationsReducer from "./slices/implementationsSlice";
+import reindeerReducer from "./slices/reindeerSlice";
 import executionReducer from "./slices/executionSlice";
 import settingsReducer from "./slices/settingsSlice";
 
 export const store = configureStore({
   reducer: {
     tabs: tabsReducer,
-    implementations: implementationsReducer,
+    reindeer: reindeerReducer,
     execution: executionReducer,
     settings: settingsReducer,
   },

@@ -8,7 +8,7 @@ import { useRef, useCallback, useEffect } from "react";
 export function Editor() {
   const dispatch = useAppDispatch();
   const { tabs, activeTabId } = useAppSelector((state) => state.tabs);
-  const { selectedId } = useAppSelector((state) => state.implementations);
+  const { selectedId } = useAppSelector((state) => state.reindeer);
   const editorRef = useRef<editor.IStandaloneCodeEditor | null>(null);
 
   const activeTab = tabs.find((t) => t.id === activeTabId);

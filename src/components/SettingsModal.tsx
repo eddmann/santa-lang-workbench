@@ -2,12 +2,12 @@ import { useState, useEffect } from "react";
 import { useAppDispatch, useAppSelector } from "../store";
 import { closeSettingsModal, saveSettings } from "../store/slices/settingsSlice";
 import {
-  loadImplementations,
-  addImplementation,
-  removeImplementation,
+  loadReindeer,
+  addReindeer,
+  removeReindeer,
   fetchReleases,
-  downloadImplementation,
-} from "../store/slices/implementationsSlice";
+  downloadReindeer,
+} from "../store/slices/reindeerSlice";
 import { open } from "@tauri-apps/plugin-dialog";
 import {
   XMarkIcon,
@@ -36,13 +36,13 @@ const CODENAMES = [
 export function SettingsModal() {
   const dispatch = useAppDispatch();
   const { isModalOpen, settings } = useAppSelector((state) => state.settings);
-  const { implementations, releases, releasesLoading } = useAppSelector(
-    (state) => state.implementations
+  const { reindeer, releases, releasesLoading } = useAppSelector(
+    (state) => state.reindeer
   );
 
   const [localSettings, setLocalSettings] = useState<Settings>(settings);
-  const [activeTab, setActiveTab] = useState<"implementations" | "general">(
-    "implementations"
+  const [activeTab, setActiveTab] = useState<"reindeer" | "general">(
+    "reindeer"
   );
   const [selectedCodename, setSelectedCodename] = useState<string | null>(null);
   const [downloadingRelease, setDownloadingRelease] = useState<string | null>(null);
@@ -52,7 +52,7 @@ export function SettingsModal() {
   }, [settings]);
 
   useEffect(() => {
-    dispatch(loadImplementations());
+    dispatch(loadReindeer());
   }, [dispatch]);
 
   if (!isModalOpen) return null;
@@ -76,15 +76,15 @@ export function SettingsModal() {
 
     if (selected) {
       try {
-        await dispatch(addImplementation(selected)).unwrap();
+        await dispatch(addReindeer(selected)).unwrap();
       } catch (e) {
-        console.error("Failed to add implementation:", e);
+        console.error("Failed to add reindeer:", e);
       }
     }
   };
 
   const handleRemove = async (id: string) => {
-    await dispatch(removeImplementation(id));
+    await dispatch(removeReindeer(id));
   };
 
   const handleFetchReleases = async (codename: string) => {
@@ -103,7 +103,7 @@ export function SettingsModal() {
     setDownloadingRelease(release.tag_name);
     try {
       await dispatch(
-        downloadImplementation({ codename, assetUrl, assetName })
+        downloadReindeer({ codename, assetUrl, assetName })
       ).unwrap();
     } catch (e) {
       console.error("Failed to download:", e);
@@ -114,15 +114,15 @@ export function SettingsModal() {
   // Check if a release version is already installed
   const isReleaseInstalled = (codename: string, release: Release) => {
     const version = release.tag_name.replace(/^v/, "");
-    return implementations.some(
+    return reindeer.some(
       (impl) => impl.codename === codename && impl.version === version
     );
   };
 
-  // Get the installed implementation for a release (for deletion)
+  // Get the installed reindeer for a release (for deletion)
   const getInstalledImpl = (codename: string, release: Release) => {
     const version = release.tag_name.replace(/^v/, "");
-    return implementations.find(
+    return reindeer.find(
       (impl) => impl.codename === codename && impl.version === version
     );
   };
@@ -169,15 +169,15 @@ export function SettingsModal() {
         {/* Tabs */}
         <div className="flex border-b border-[var(--color-border-subtle)]">
           <button
-            onClick={() => setActiveTab("implementations")}
+            onClick={() => setActiveTab("reindeer")}
             className={`flex items-center gap-2 px-6 py-3 text-sm font-medium transition-colors duration-150 ${
-              activeTab === "implementations"
+              activeTab === "reindeer"
                 ? "text-[var(--color-accent)] border-b-2 border-[var(--color-accent)]"
                 : "text-[var(--color-text-secondary)] hover:text-[var(--color-text-primary)]"
             }`}
           >
             <CpuChipIcon className="w-4 h-4" />
-            Implementations
+            Reindeer
           </button>
           <button
             onClick={() => setActiveTab("general")}
@@ -194,7 +194,7 @@ export function SettingsModal() {
 
         {/* Content */}
         <div className="flex-1 overflow-auto p-6">
-          {activeTab === "implementations" && (
+          {activeTab === "reindeer" && (
             <div className="space-y-6">
               {/* Installed */}
               <div>
@@ -212,11 +212,11 @@ export function SettingsModal() {
                   </button>
                 </div>
 
-                {implementations.length === 0 ? (
+                {reindeer.length === 0 ? (
                   <div className="py-8 text-center border-2 border-dashed border-[var(--color-border)] rounded-lg">
                     <CloudArrowDownIcon className="w-10 h-10 mx-auto text-[var(--color-text-muted)] mb-3" />
                     <p className="text-sm text-[var(--color-text-muted)]">
-                      No implementations installed
+                      No reindeer installed
                     </p>
                     <p className="text-xs text-[var(--color-text-faint)] mt-1">
                       Download one below or add a local binary
@@ -224,9 +224,9 @@ export function SettingsModal() {
                   </div>
                 ) : (
                   <div className="space-y-2">
-                    {implementations.map((impl) => (
+                    {reindeer.map((r) => (
                       <div
-                        key={impl.id}
+                        key={r.id}
                         className="group flex items-center justify-between p-4
                                  bg-[var(--color-background)] rounded-lg
                                  border border-[var(--color-border-subtle)]
@@ -240,20 +240,20 @@ export function SettingsModal() {
                           <div>
                             <div className="flex items-center gap-2">
                               <span className="font-semibold text-[var(--color-text-primary)]">
-                                {impl.name}
+                                {r.name}
                               </span>
                               <span className="text-xs font-mono text-[var(--color-text-muted)]
                                            bg-[var(--color-surface-elevated)] px-1.5 py-0.5 rounded">
-                                {impl.version}
+                                {r.version}
                               </span>
                             </div>
                             <p className="text-xs text-[var(--color-text-muted)] truncate max-w-md mt-0.5 font-mono">
-                              {impl.path}
+                              {r.path}
                             </p>
                           </div>
                         </div>
                         <button
-                          onClick={() => handleRemove(impl.id)}
+                          onClick={() => handleRemove(r.id)}
                           className="p-2 text-[var(--color-text-muted)]
                                    hover:text-[var(--color-error)] hover:bg-[var(--color-error-glow)]
                                    rounded-lg transition-colors duration-150

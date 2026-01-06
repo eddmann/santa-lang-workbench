@@ -28,12 +28,12 @@ pub fn run() {
             Ok(())
         })
         .invoke_handler(tauri::generate_handler![
-            commands::implementations::get_implementations,
-            commands::implementations::add_implementation,
-            commands::implementations::remove_implementation,
-            commands::implementations::detect_implementation,
+            commands::reindeer::get_reindeer,
+            commands::reindeer::add_reindeer,
+            commands::reindeer::remove_reindeer,
+            commands::reindeer::detect_reindeer,
             commands::github::get_github_releases,
-            commands::github::download_implementation,
+            commands::github::download_reindeer,
             commands::execution::run_execution,
             commands::execution::cancel_execution,
             commands::settings::get_settings,

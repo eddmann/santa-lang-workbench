@@ -1,33 +1,33 @@
-use crate::state::{AppState, Implementation};
+use crate::state::{AppState, Reindeer};
 use std::path::PathBuf;
 use std::process::Command;
 use std::sync::Mutex;
 use tauri::State;
 
 #[tauri::command]
-pub fn get_implementations(
+pub fn get_reindeer(
     state: State<'_, Mutex<AppState>>,
-) -> Result<Vec<Implementation>, String> {
+) -> Result<Vec<Reindeer>, String> {
     let state = state.lock().map_err(|e| e.to_string())?;
-    Ok(state.implementations.values().cloned().collect())
+    Ok(state.reindeer.values().cloned().collect())
 }
 
 #[tauri::command]
-pub fn add_implementation(
+pub fn add_reindeer(
     state: State<'_, Mutex<AppState>>,
     app: tauri::AppHandle,
     path: String,
-) -> Result<Implementation, String> {
+) -> Result<Reindeer, String> {
     let path = PathBuf::from(&path);
 
     if !path.exists() {
         return Err("File does not exist".to_string());
     }
 
-    let info = detect_implementation_info(&path)?;
+    let info = detect_reindeer_info(&path)?;
 
     let id = uuid::Uuid::new_v4().to_string();
-    let implementation = Implementation {
+    let reindeer = Reindeer {
         id: id.clone(),
         name: info.0,
         codename: info.1,
@@ -37,32 +37,32 @@ pub fn add_implementation(
 
     {
         let mut state = state.lock().map_err(|e| e.to_string())?;
-        state.implementations.insert(id, implementation.clone());
+        state.reindeer.insert(id, reindeer.clone());
         state.save(&app).map_err(|e| e.to_string())?;
     }
 
-    Ok(implementation)
+    Ok(reindeer)
 }
 
 #[tauri::command]
-pub fn remove_implementation(
+pub fn remove_reindeer(
     state: State<'_, Mutex<AppState>>,
     app: tauri::AppHandle,
     id: String,
 ) -> Result<(), String> {
     let mut state = state.lock().map_err(|e| e.to_string())?;
-    state.implementations.remove(&id);
+    state.reindeer.remove(&id);
     state.save(&app).map_err(|e| e.to_string())?;
     Ok(())
 }
 
 #[tauri::command]
-pub fn detect_implementation(path: String) -> Result<(String, String, String), String> {
+pub fn detect_reindeer(path: String) -> Result<(String, String, String), String> {
     let path = PathBuf::from(&path);
-    detect_implementation_info(&path)
+    detect_reindeer_info(&path)
 }
 
-fn detect_implementation_info(path: &PathBuf) -> Result<(String, String, String), String> {
+fn detect_reindeer_info(path: &PathBuf) -> Result<(String, String, String), String> {
     let output = Command::new(path)
         .arg("--version")
         .output()

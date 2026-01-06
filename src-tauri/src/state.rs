@@ -4,7 +4,7 @@ use std::path::PathBuf;
 use tauri::AppHandle;
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
-pub struct Implementation {
+pub struct Reindeer {
     pub id: String,
     pub name: String,
     pub codename: String,
@@ -15,13 +15,13 @@ pub struct Implementation {
 #[derive(Debug, Clone, Serialize, Deserialize, Default)]
 pub struct Settings {
     pub aoc_session_token: Option<String>,
-    pub default_implementation: Option<String>,
+    pub default_reindeer: Option<String>,
     pub theme: String,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, Default)]
 pub struct AppState {
-    pub implementations: HashMap<String, Implementation>,
+    pub reindeer: HashMap<String, Reindeer>,
     pub settings: Settings,
     #[serde(skip)]
     pub running_processes: HashMap<String, u32>,

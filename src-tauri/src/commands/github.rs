@@ -19,7 +19,7 @@ pub struct Asset {
 #[tauri::command]
 pub async fn get_github_releases(codename: String) -> Result<Vec<Release>, String> {
     let repo = get_repo_for_codename(&codename)
-        .ok_or_else(|| format!("Unknown implementation: {}", codename))?;
+        .ok_or_else(|| format!("Unknown reindeer: {}", codename))?;
 
     let url = format!("https://api.github.com/repos/{}/releases", repo);
 
@@ -42,7 +42,7 @@ pub async fn get_github_releases(codename: String) -> Result<Vec<Release>, Strin
 }
 
 #[tauri::command]
-pub async fn download_implementation(
+pub async fn download_reindeer(
     codename: String,
     asset_url: String,
     asset_name: String,
@@ -51,7 +51,7 @@ pub async fn download_implementation(
     let download_dir = dirs::data_local_dir()
         .ok_or("Could not find local data directory")?
         .join("santa-lang-toy-shop")
-        .join("implementations")
+        .join("reindeer")
         .join(&codename);
 
     std::fs::create_dir_all(&download_dir).map_err(|e| e.to_string())?;

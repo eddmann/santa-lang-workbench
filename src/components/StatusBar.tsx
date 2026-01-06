@@ -8,29 +8,29 @@ import {
 
 export function StatusBar() {
   const { tabs, activeTabId } = useAppSelector((state) => state.tabs);
-  const { implementations, selectedId } = useAppSelector(
-    (state) => state.implementations
+  const { reindeer, selectedId } = useAppSelector(
+    (state) => state.reindeer
   );
   const { status } = useAppSelector((state) => state.execution);
 
   const activeTab = tabs.find((t) => t.id === activeTabId);
-  const selectedImpl = implementations.find((i) => i.id === selectedId);
+  const selectedReindeer = reindeer.find((r) => r.id === selectedId);
 
   return (
     <div className="flex items-center justify-between h-6 px-3 bg-[var(--color-surface)]
                   border-t border-[var(--color-border-subtle)] text-xs select-none">
       {/* Left section */}
       <div className="flex items-center gap-3">
-        {/* Implementation */}
+        {/* Reindeer */}
         <div className="flex items-center gap-1.5">
           <CpuChipIcon className="w-3.5 h-3.5 text-[var(--color-text-faint)]" />
-          {selectedImpl ? (
+          {selectedReindeer ? (
             <span className="text-[var(--color-text-muted)]">
-              {selectedImpl.name}
-              <span className="text-[var(--color-text-faint)] ml-1">{selectedImpl.version}</span>
+              {selectedReindeer.name}
+              <span className="text-[var(--color-text-faint)] ml-1">{selectedReindeer.version}</span>
             </span>
           ) : (
-            <span className="text-[var(--color-warning)]">No implementation</span>
+            <span className="text-[var(--color-warning)]">No reindeer</span>
           )}
         </div>
 

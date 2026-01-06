@@ -20,14 +20,14 @@ pub async fn run_execution(
     mode: String, // "run", "test", "script"
     working_dir: Option<String>,
 ) -> Result<(), String> {
-    let (impl_path, aoc_token) = {
+    let (reindeer_path, aoc_token) = {
         let state = state.lock().map_err(|e| e.to_string())?;
-        let implementation = state
-            .implementations
+        let reindeer = state
+            .reindeer
             .get(&impl_id)
-            .ok_or("Implementation not found")?;
+            .ok_or("Reindeer not found")?;
         (
-            implementation.path.clone(),
+            reindeer.path.clone(),
             state.settings.aoc_session_token.clone(),
         )
     };
@@ -54,7 +54,7 @@ pub async fn run_execution(
     args.push(temp_file.to_string_lossy().to_string());
 
     // Spawn the process
-    let mut cmd = Command::new(&impl_path);
+    let mut cmd = Command::new(&reindeer_path);
     cmd.args(&args)
         .stdin(Stdio::null())
         .stdout(Stdio::piped())

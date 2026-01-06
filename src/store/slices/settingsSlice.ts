@@ -12,7 +12,7 @@ interface SettingsState {
 const initialState: SettingsState = {
   settings: {
     aoc_session_token: null,
-    default_implementation: null,
+    default_reindeer: null,
     theme: "dark",
   },
   isLoading: false,

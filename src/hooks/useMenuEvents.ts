@@ -15,7 +15,7 @@ import { openSettingsModal } from "../store/slices/settingsSlice";
 export function useMenuEvents() {
   const dispatch = useAppDispatch();
   const { tabs, activeTabId } = useAppSelector((state) => state.tabs);
-  const { selectedId } = useAppSelector((state) => state.implementations);
+  const { selectedId } = useAppSelector((state) => state.reindeer);
   const { status } = useAppSelector((state) => state.execution);
 
   const activeTab = tabs.find((t) => t.id === activeTabId);

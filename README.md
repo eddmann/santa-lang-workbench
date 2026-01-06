@@ -8,8 +8,8 @@ A cross-platform desktop editor for [santa-lang](https://eddmann.com/santa-lang/
 - **Multiple tabs** for editing files
 - **JSONL Streaming** - Real-time execution results as parts run
 - **Test Runner** - See test cases pass/fail with expected vs actual values
-- **Multiple Implementations** - Switch between Comet, Blitzen, Dasher, Donner, Prancer, Vixen
-- **GitHub Releases** - Download implementations directly from the editor
+- **Multiple Reindeer** - Switch between Comet, Blitzen, Dasher, Donner, Prancer, Vixen
+- **GitHub Releases** - Download reindeer directly from the editor
 - **AoC Integration** - Configure session token for `read("aoc://YEAR/DAY")`
 
 ## Tech Stack
@@ -41,7 +41,7 @@ bun tauri build
 
 ## How It Works
 
-Santa Lang Studio spawns CLI implementations with `-o jsonl` flag to stream execution results. The JSONL format provides:
+Santa Lang Studio spawns CLI reindeer with `-o jsonl` flag to stream execution results. The JSONL format provides:
 
 1. **Initial state** - Template with all parts set to "pending"
 2. **JSON Patches** - RFC 6902 patches as execution progresses
@@ -49,7 +49,7 @@ Santa Lang Studio spawns CLI implementations with `-o jsonl` flag to stream exec
 
 This enables live progress indicators as long-running solutions execute.
 
-## Implementations
+## Reindeer
 
 | Codename | Type | Description |
 |----------|------|-------------|
