@@ -2,13 +2,16 @@ import MonacoEditor from "@monaco-editor/react";
 import { useAppDispatch, useAppSelector } from "../store";
 import { updateTabContent } from "../store/slices/tabsSlice";
 import { startExecution, resetExecution } from "../store/slices/executionSlice";
+import { openDownloadModal, formatCode } from "../store/slices/formatterSlice";
 import type { editor } from "monaco-editor";
 import { useRef, useCallback, useEffect } from "react";
+import type { FormatterStatus } from "../lib/types";
 
 export function Editor() {
   const dispatch = useAppDispatch();
   const { tabs, activeTabId } = useAppSelector((state) => state.tabs);
   const { selectedId } = useAppSelector((state) => state.reindeer);
+  const { status: formatterStatus } = useAppSelector((state) => state.formatter);
   const editorRef = useRef<editor.IStandaloneCodeEditor | null>(null);
 
   const activeTab = tabs.find((t) => t.id === activeTabId);
@@ -17,6 +20,7 @@ export function Editor() {
   // This prevents stale closure issues since Monaco commands are only registered once
   const activeTabRef = useRef(activeTab);
   const selectedIdRef = useRef(selectedId);
+  const formatterStatusRef = useRef<FormatterStatus | null>(formatterStatus);
 
   useEffect(() => {
     activeTabRef.current = activeTab;
@@ -25,6 +29,10 @@ export function Editor() {
   useEffect(() => {
     selectedIdRef.current = selectedId;
   }, [selectedId]);
+
+  useEffect(() => {
+    formatterStatusRef.current = formatterStatus;
+  }, [formatterStatus]);
 
   const handleEditorMount = useCallback(
     (editor: editor.IStandaloneCodeEditor, monaco: typeof import("monaco-editor")) => {
@@ -67,6 +75,31 @@ export function Editor() {
                   : undefined,
               })
             );
+          }
+        }
+      );
+
+      // Format command (Cmd+Shift+F)
+      editor.addCommand(
+        monaco.KeyMod.CtrlCmd | monaco.KeyMod.Shift | monaco.KeyCode.KeyF,
+        async () => {
+          const tab = activeTabRef.current;
+          const status = formatterStatusRef.current;
+          if (!tab) return;
+
+          if (!status?.installed) {
+            dispatch(openDownloadModal());
+          } else {
+            const result = await dispatch(formatCode(editor.getValue())).unwrap();
+            if (result.success && result.formatted) {
+              // Preserve cursor position
+              const position = editor.getPosition();
+              editor.setValue(result.formatted);
+              if (position) {
+                editor.setPosition(position);
+              }
+              dispatch(updateTabContent({ id: tab.id, content: result.formatted }));
+            }
           }
         }
       );

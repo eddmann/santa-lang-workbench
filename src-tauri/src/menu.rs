@@ -24,6 +24,8 @@ pub fn create_menu(app: &AppHandle) -> tauri::Result<tauri::menu::Menu<Wry>> {
         .item(&PredefinedMenuItem::copy(app, Some("Copy"))?)
         .item(&PredefinedMenuItem::paste(app, Some("Paste"))?)
         .item(&PredefinedMenuItem::select_all(app, Some("Select All"))?)
+        .separator()
+        .item(&MenuItemBuilder::with_id("format", "Format Code").accelerator("CmdOrCtrl+Shift+F").build(app)?)
         .build()?;
 
     // Run menu

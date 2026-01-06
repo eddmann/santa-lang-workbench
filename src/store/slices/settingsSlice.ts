@@ -14,6 +14,7 @@ const initialState: SettingsState = {
     aoc_session_token: null,
     default_reindeer: null,
     theme: "dark",
+    format_on_save: false,
   },
   isLoading: false,
   isModalOpen: false,

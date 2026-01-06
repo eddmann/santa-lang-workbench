@@ -442,6 +442,32 @@ export function SettingsModal() {
                 </div>
               </div>
 
+              {/* Format on Save */}
+              <div>
+                <label className="flex items-center gap-2 text-sm font-semibold text-[var(--color-text-secondary)] mb-3">
+                  <SwatchIcon className="w-4 h-4" />
+                  Code Formatting
+                </label>
+                <div className="flex items-center justify-between p-4 bg-[var(--color-background)] rounded-lg border border-[var(--color-border-subtle)]">
+                  <div>
+                    <p className="font-medium text-[var(--color-text-primary)]">Format on Save</p>
+                    <p className="text-xs text-[var(--color-text-muted)] mt-0.5">
+                      Automatically format code when saving
+                    </p>
+                  </div>
+                  <button
+                    onClick={() => setLocalSettings({ ...localSettings, format_on_save: !localSettings.format_on_save })}
+                    className={`relative w-11 h-6 rounded-full transition-colors duration-200 ${
+                      localSettings.format_on_save ? "bg-[var(--color-accent)]" : "bg-[var(--color-surface-elevated)]"
+                    }`}
+                  >
+                    <span className={`absolute top-1 left-1 w-4 h-4 bg-white rounded-full transition-transform duration-200 ${
+                      localSettings.format_on_save ? "translate-x-5" : ""
+                    }`} />
+                  </button>
+                </div>
+              </div>
+
               {/* AoC Session Token */}
               <div>
                 <label className="flex items-center gap-2 text-sm font-semibold text-[var(--color-text-secondary)] mb-3">

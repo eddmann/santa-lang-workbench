@@ -10,6 +10,25 @@ export interface Settings {
   aoc_session_token: string | null;
   default_reindeer: string | null;
   theme: string;
+  format_on_save: boolean;
+}
+
+export interface FormatterStatus {
+  installed: boolean;
+  path: string | null;
+  version: string | null;
+}
+
+export interface FormatResult {
+  success: boolean;
+  formatted: string | null;
+  error: FormatError | null;
+}
+
+export interface FormatError {
+  message: string;
+  line?: number;
+  column?: number;
 }
 
 export interface Release {

@@ -3,20 +3,27 @@ import { listen } from "@tauri-apps/api/event";
 import { open as openDialog, save } from "@tauri-apps/plugin-dialog";
 import { readTextFile, writeTextFile } from "@tauri-apps/plugin-fs";
 import { open as openUrl } from "@tauri-apps/plugin-shell";
+import { toast } from "sonner";
 import { useAppDispatch, useAppSelector } from "../store";
-import { addTab, closeTab, saveTab } from "../store/slices/tabsSlice";
+import { addTab, closeTab, saveTab, updateTabContent } from "../store/slices/tabsSlice";
 import {
   startExecution,
   cancelExecution,
   resetExecution,
 } from "../store/slices/executionSlice";
 import { openSettingsModal } from "../store/slices/settingsSlice";
+import {
+  openDownloadModal,
+  formatCode,
+} from "../store/slices/formatterSlice";
 
 export function useMenuEvents() {
   const dispatch = useAppDispatch();
   const { tabs, activeTabId } = useAppSelector((state) => state.tabs);
   const { selectedId } = useAppSelector((state) => state.reindeer);
   const { status } = useAppSelector((state) => state.execution);
+  const { status: formatterStatus } = useAppSelector((state) => state.formatter);
+  const { format_on_save } = useAppSelector((state) => state.settings.settings);
 
   const activeTab = tabs.find((t) => t.id === activeTabId);
 
@@ -42,6 +49,23 @@ export function useMenuEvents() {
 
         case "save": {
           if (!activeTab) break;
+          let contentToSave = activeTab.content;
+
+          // Format on save if enabled
+          if (format_on_save) {
+            if (!formatterStatus?.installed) {
+              toast.warning("Format on save skipped", {
+                description: "Formatter not installed. Click Format to download.",
+              });
+            } else {
+              const result = await dispatch(formatCode(activeTab.content)).unwrap();
+              if (result.success && result.formatted) {
+                contentToSave = result.formatted;
+                dispatch(updateTabContent({ id: activeTab.id, content: result.formatted }));
+              }
+            }
+          }
+
           let path = activeTab.path;
           if (!path) {
             const selected = await save({
@@ -51,7 +75,7 @@ export function useMenuEvents() {
             if (!selected) break;
             path = selected;
           }
-          await writeTextFile(path, activeTab.content);
+          await writeTextFile(path, contentToSave);
           const name = path.split("/").pop() || activeTab.name;
           dispatch(saveTab({ id: activeTab.id, path, name }));
           break;
@@ -121,11 +145,24 @@ export function useMenuEvents() {
         case "docs":
           openUrl("https://github.com/eddmann/santa-lang");
           break;
+
+        case "format": {
+          if (!activeTab) break;
+          if (!formatterStatus?.installed) {
+            dispatch(openDownloadModal());
+          } else {
+            const result = await dispatch(formatCode(activeTab.content)).unwrap();
+            if (result.success && result.formatted) {
+              dispatch(updateTabContent({ id: activeTab.id, content: result.formatted }));
+            }
+          }
+          break;
+        }
       }
     });
 
     return () => {
       unlisten.then((f) => f());
     };
-  }, [dispatch, activeTab, activeTabId, selectedId, status]);
+  }, [dispatch, activeTab, activeTabId, selectedId, status, formatterStatus, format_on_save]);
 }

@@ -1,3 +1,5 @@
+pub const FORMATTER_REPO: &str = "eddmann/santa-lang-comet";
+
 pub const IMPLEMENTATIONS: &[(&str, &str, &str)] = &[
     ("comet", "Comet", "eddmann/santa-lang-comet"),
     ("blitzen", "Blitzen", "eddmann/santa-lang-blitzen"),
@@ -12,11 +14,4 @@ pub fn get_repo_for_codename(codename: &str) -> Option<&'static str> {
         .iter()
         .find(|(c, _, _)| *c == codename)
         .map(|(_, _, repo)| *repo)
-}
-
-pub fn get_name_for_codename(codename: &str) -> Option<&'static str> {
-    IMPLEMENTATIONS
-        .iter()
-        .find(|(c, _, _)| *c == codename)
-        .map(|(_, name, _)| *name)
 }

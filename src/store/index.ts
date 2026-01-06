@@ -4,6 +4,7 @@ import tabsReducer from "./slices/tabsSlice";
 import reindeerReducer from "./slices/reindeerSlice";
 import executionReducer from "./slices/executionSlice";
 import settingsReducer from "./slices/settingsSlice";
+import formatterReducer from "./slices/formatterSlice";
 
 export const store = configureStore({
   reducer: {
@@ -11,6 +12,7 @@ export const store = configureStore({
     reindeer: reindeerReducer,
     execution: executionReducer,
     settings: settingsReducer,
+    formatter: formatterReducer,
   },
 });
 

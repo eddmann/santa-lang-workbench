@@ -3,7 +3,11 @@ import { useAppDispatch, useAppSelector } from "../store";
 import { startExecution, cancelExecution, resetExecution } from "../store/slices/executionSlice";
 import { selectReindeer } from "../store/slices/reindeerSlice";
 import { openSettingsModal } from "../store/slices/settingsSlice";
-import { addTab, saveTab } from "../store/slices/tabsSlice";
+import { addTab, saveTab, updateTabContent } from "../store/slices/tabsSlice";
+import {
+  openDownloadModal,
+  formatCode,
+} from "../store/slices/formatterSlice";
 import { open, save } from "@tauri-apps/plugin-dialog";
 import { readTextFile, writeTextFile } from "@tauri-apps/plugin-fs";
 import {
@@ -13,7 +17,9 @@ import {
   FolderOpenIcon,
   Cog6ToothIcon,
   ChevronDownIcon,
+  CodeBracketIcon,
 } from "@heroicons/react/20/solid";
+import { toast } from "sonner";
 
 export function Toolbar() {
   const dispatch = useAppDispatch();
@@ -22,6 +28,10 @@ export function Toolbar() {
     (state) => state.reindeer
   );
   const { status } = useAppSelector((state) => state.execution);
+  const { status: formatterStatus, isFormatting } = useAppSelector(
+    (state) => state.formatter
+  );
+  const { format_on_save } = useAppSelector((state) => state.settings.settings);
 
   const activeTab = tabs.find((t) => t.id === activeTabId);
   const isRunning = status === "running";
@@ -102,8 +112,39 @@ export function Toolbar() {
     }
   };
 
+  const handleFormat = async () => {
+    if (!activeTab) return;
+
+    if (!formatterStatus?.installed) {
+      dispatch(openDownloadModal());
+      return;
+    }
+
+    const result = await dispatch(formatCode(activeTab.content)).unwrap();
+    if (result.success && result.formatted) {
+      dispatch(updateTabContent({ id: activeTab.id, content: result.formatted }));
+    }
+  };
+
   const handleSave = async () => {
     if (!activeTab) return;
+
+    let contentToSave = activeTab.content;
+
+    // Format on save if enabled
+    if (format_on_save) {
+      if (!formatterStatus?.installed) {
+        toast.warning("Format on save skipped", {
+          description: "Formatter not installed. Click Format to download.",
+        });
+      } else {
+        const result = await dispatch(formatCode(activeTab.content)).unwrap();
+        if (result.success && result.formatted) {
+          contentToSave = result.formatted;
+          dispatch(updateTabContent({ id: activeTab.id, content: result.formatted }));
+        }
+      }
+    }
 
     let path = activeTab.path;
 
@@ -117,7 +158,7 @@ export function Toolbar() {
       path = selected;
     }
 
-    await writeTextFile(path, activeTab.content);
+    await writeTextFile(path, contentToSave);
     const name = path.split("/").pop() || activeTab.name;
     dispatch(saveTab({ id: activeTab.id, path, name }));
   };
@@ -256,6 +297,25 @@ export function Toolbar() {
                           bg-[var(--color-background)] text-[var(--color-text-muted)]
                           border border-[var(--color-border)]">
             ⌘S
+          </kbd>
+        </button>
+
+        {/* Format Button */}
+        <button
+          onClick={handleFormat}
+          disabled={!activeTab || isFormatting}
+          className="flex items-center gap-1.5 h-8 px-3 rounded-md text-sm
+                     text-[var(--color-text-muted)]
+                     hover:text-[var(--color-text-primary)] hover:bg-[var(--color-surface-elevated)]
+                     disabled:opacity-40 disabled:hover:bg-transparent
+                     transition-colors duration-150"
+        >
+          <CodeBracketIcon className="w-4 h-4" />
+          <span>Format</span>
+          <kbd className="hidden sm:inline-flex items-center h-5 px-1.5 rounded text-[10px] font-mono font-medium
+                          bg-[var(--color-background)] text-[var(--color-text-muted)]
+                          border border-[var(--color-border)]">
+            {navigator.platform.includes("Mac") ? "⇧⌘F" : "Ctrl+Shift+F"}
           </kbd>
         </button>
 

@@ -17,6 +17,9 @@ pub struct Settings {
     pub aoc_session_token: Option<String>,
     pub default_reindeer: Option<String>,
     pub theme: String,
+    #[serde(default)]
+    pub format_on_save: bool,
+    pub formatter_path: Option<PathBuf>,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, Default)]
