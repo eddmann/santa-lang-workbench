@@ -1,6 +1,7 @@
 import { useEffect, useMemo } from "react";
 import { Provider } from "react-redux";
 import { Toaster } from "sonner";
+import { Group, Panel, Separator } from "react-resizable-panels";
 import { store, useAppDispatch, useAppSelector } from "./store";
 import { loadReindeer } from "./store/slices/reindeerSlice";
 import { loadSettings } from "./store/slices/settingsSlice";
@@ -53,24 +54,25 @@ function AppContent() {
     <div className="h-screen flex flex-col bg-[var(--color-background)]">
       <Toolbar />
       <EditorTabs />
-      <div className="flex-1 flex min-h-0">
+      <Group orientation="horizontal" style={{ flex: 1, minHeight: 0 }}>
         {/* Editor Panel */}
-        <div className="flex-1 min-w-0 border-r border-[var(--color-border)]">
-          <Editor />
-        </div>
+        <Panel minSize="200px">
+          <div className="h-full min-w-0">
+            <Editor />
+          </div>
+        </Panel>
+        <Separator className="resize-handle" />
         {/* Output Panel */}
-        <div className={`bg-[var(--color-background)] ${
-          showMultiOutput
-            ? "w-[500px] min-w-[400px] max-w-[800px]"
-            : "w-[400px] min-w-[300px] max-w-[600px]"
-        }`}>
-          {showMultiOutput ? (
-            <MultiOutputPanel />
-          ) : (
-            <OutputPanel execution={singleExecution} />
-          )}
-        </div>
-      </div>
+        <Panel defaultSize="400px" minSize="300px" maxSize="900px">
+          <div className="h-full bg-[var(--color-background)]">
+            {showMultiOutput ? (
+              <MultiOutputPanel />
+            ) : (
+              <OutputPanel execution={singleExecution} />
+            )}
+          </div>
+        </Panel>
+      </Group>
       <StatusBar />
       <SettingsModal />
       <FormatterDownloadModal />

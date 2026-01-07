@@ -160,3 +160,17 @@ body {
 .monaco-editor .margin {
   background: var(--color-background) !important;
 }
+
+/* Resize handle */
+.resize-handle {
+  width: 1px;
+  background: var(--color-border);
+  transition: background 0.15s ease, width 0.15s ease;
+  cursor: col-resize;
+}
+
+.resize-handle:hover,
+.resize-handle[data-resize-handle-active] {
+  width: 3px;
+  background: var(--color-accent);
+}
