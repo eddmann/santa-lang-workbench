@@ -44,11 +44,15 @@ export function FormatterDownloadModal() {
     if (platform.includes("mac")) os = "macos";
     else if (platform.includes("win")) os = "windows";
 
+    // Find CLI binary for this platform (exclude archives, checksums, and non-CLI assets)
     return release.assets.find(
       (a) =>
+        a.name.includes("-cli-") &&
         a.name.includes(os) &&
         a.name.includes(arch) &&
-        !a.name.endsWith(".sha256")
+        !a.name.endsWith(".sha256") &&
+        !a.name.endsWith(".tar.gz") &&
+        !a.name.endsWith(".zip")
     );
   };
 

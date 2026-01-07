@@ -25,3 +25,5 @@ dirs = "6"
 uuid = { version = "1", features = ["v4"] }
 reqwest = { version = "0.12", features = ["json"] }
 regex-lite = "0.1"
+flate2 = "1"
+tar = "0.4"

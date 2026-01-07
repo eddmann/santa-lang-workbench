@@ -1,6 +1,17 @@
 use crate::config::get_repo_for_codename;
 use serde::{Deserialize, Serialize};
 
+/// Check if a version tag represents >= 1.0.0
+/// Handles tags like "v1.0.0", "1.0.0", "v1.2.3", etc.
+fn is_version_gte_1_0_0(tag: &str) -> bool {
+    let version = tag.strip_prefix('v').unwrap_or(tag);
+    version
+        .split('.')
+        .next()
+        .and_then(|s| s.parse::<u32>().ok())
+        .map_or(false, |major| major >= 1)
+}
+
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct Release {
     pub tag_name: String,
@@ -38,7 +49,13 @@ pub async fn get_github_releases(codename: String) -> Result<Vec<Release>, Strin
 
     let releases: Vec<Release> = response.json().await.map_err(|e| e.to_string())?;
 
-    Ok(releases)
+    // Filter to only releases >= 1.0.0 (when JSONL support was added)
+    let filtered: Vec<Release> = releases
+        .into_iter()
+        .filter(|r| is_version_gte_1_0_0(&r.tag_name))
+        .collect();
+
+    Ok(filtered)
 }
 
 #[tauri::command]
@@ -56,8 +73,6 @@ pub async fn download_reindeer(
 
     std::fs::create_dir_all(&download_dir).map_err(|e| e.to_string())?;
 
-    let dest_path = download_dir.join(&asset_name);
-
     // Download the file
     let client = reqwest::Client::new();
     let response = client
@@ -73,7 +88,15 @@ pub async fn download_reindeer(
     }
 
     let bytes = response.bytes().await.map_err(|e| e.to_string())?;
-    std::fs::write(&dest_path, &bytes).map_err(|e| e.to_string())?;
+
+    // Handle tar.gz archives (e.g., Donner)
+    let dest_path = if asset_name.ends_with(".tar.gz") {
+        extract_tarball(&bytes, &download_dir, &asset_name)?
+    } else {
+        let path = download_dir.join(&asset_name);
+        std::fs::write(&path, &bytes).map_err(|e| e.to_string())?;
+        path
+    };
 
     // Make executable on Unix
     #[cfg(unix)]
@@ -87,4 +110,41 @@ pub async fn download_reindeer(
     }
 
     Ok(dest_path.to_string_lossy().to_string())
+}
+
+/// Extract a tar.gz archive and find the CLI binary inside
+fn extract_tarball(
+    data: &[u8],
+    download_dir: &std::path::Path,
+    _asset_name: &str,
+) -> Result<std::path::PathBuf, String> {
+    use flate2::read::GzDecoder;
+    use tar::Archive;
+
+    let decoder = GzDecoder::new(data);
+    let mut archive = Archive::new(decoder);
+
+    // Extract directly to download directory
+    archive
+        .unpack(download_dir)
+        .map_err(|e| format!("Failed to extract archive: {}", e))?;
+
+    // Find the CLI binary inside
+    // macOS app bundle: santa-cli.app/Contents/MacOS/santa-cli (keep whole bundle)
+    // Linux: santa-cli/bin/santa-cli
+    let binary_path = if download_dir.join("santa-cli.app").exists() {
+        // macOS: Keep the whole app bundle, return path to binary inside it
+        download_dir.join("santa-cli.app/Contents/MacOS/santa-cli")
+    } else if download_dir.join("santa-cli").exists() {
+        // Linux: Return path to binary inside extracted directory
+        download_dir.join("santa-cli/bin/santa-cli")
+    } else {
+        return Err("Could not find CLI binary in archive".to_string());
+    };
+
+    if !binary_path.exists() {
+        return Err(format!("Binary not found at expected path: {:?}", binary_path));
+    }
+
+    Ok(binary_path)
 }

@@ -94,8 +94,6 @@ fn detect_reindeer_info(path: &PathBuf) -> Result<(String, String, String), Stri
         ("Donner".to_string(), "donner".to_string())
     } else if name_part.contains("prancer") || name_part == "prancer" {
         ("Prancer".to_string(), "prancer".to_string())
-    } else if name_part.contains("vixen") || name_part == "vixen" {
-        ("Vixen".to_string(), "vixen".to_string())
     } else {
         ("Unknown".to_string(), "unknown".to_string())
     };

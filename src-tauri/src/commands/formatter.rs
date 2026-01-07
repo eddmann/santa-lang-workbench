@@ -6,6 +6,17 @@ use std::process::Command;
 use std::sync::Mutex;
 use tauri::{AppHandle, State};
 
+/// Check if a version tag represents >= 1.0.0
+/// Handles tags like "v1.0.0", "1.0.0", "v1.2.3", etc.
+fn is_version_gte_1_0_0(tag: &str) -> bool {
+    let version = tag.strip_prefix('v').unwrap_or(tag);
+    version
+        .split('.')
+        .next()
+        .and_then(|s| s.parse::<u32>().ok())
+        .map_or(false, |major| major >= 1)
+}
+
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct FormatterStatus {
     pub installed: bool,
@@ -102,7 +113,13 @@ pub async fn fetch_formatter_releases() -> Result<Vec<Release>, String> {
 
     let releases: Vec<Release> = response.json().await.map_err(|e| e.to_string())?;
 
-    Ok(releases)
+    // Filter to only releases >= 1.0.0 (when JSONL support was added)
+    let filtered: Vec<Release> = releases
+        .into_iter()
+        .filter(|r| is_version_gte_1_0_0(&r.tag_name))
+        .collect();
+
+    Ok(filtered)
 }
 
 #[tauri::command]

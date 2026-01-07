@@ -5,7 +5,7 @@
 - **santa-lang Toy Shop**: Tauri 2.0 desktop IDE for santa-lang (functional language for Advent of Code)
 - Frontend: React 19 + Redux Toolkit + Monaco Editor + TailwindCSS v4
 - Backend: Rust (Tauri) with process spawning for language implementations
-- "Reindeer" = language implementation binaries (Comet, Blitzen, Dasher, Donner, Prancer, Vixen)
+- "Reindeer" = language implementation binaries (Comet, Blitzen, Dasher, Donner, Prancer)
 - Executes code via external binaries, streams JSONL results with JSON patches
 
 ### Key Directories
@@ -88,7 +88,7 @@ cd src-tauri && cargo fmt --check
 ### Naming
 
 - "Reindeer" not "implementation" (recent refactor)
-- Codenames: comet, blitzen, dasher, donner, prancer, vixen
+- Codenames: comet, blitzen, dasher, donner, prancer
 
 ## Tests & CI
 

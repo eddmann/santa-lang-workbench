@@ -30,7 +30,6 @@ const CODENAMES = [
   { id: "dasher", name: "Dasher", desc: "Rust LLVM compiler", color: "text-red-400" },
   { id: "donner", name: "Donner", desc: "Kotlin JVM compiler", color: "text-purple-400" },
   { id: "prancer", name: "Prancer", desc: "TypeScript interpreter", color: "text-yellow-400" },
-  { id: "vixen", name: "Vixen", desc: "C embedded VM (subset)", color: "text-green-400" },
 ];
 
 export function SettingsModal() {
@@ -135,11 +134,15 @@ export function SettingsModal() {
     if (platform.includes("mac")) os = "macos";
     else if (platform.includes("win")) os = "windows";
 
+    // Find CLI binary for this platform (exclude checksums and non-CLI assets)
+    // Allow .tar.gz since backend handles extraction (e.g., Donner)
     return release.assets.find(
       (a) =>
+        a.name.includes("-cli-") &&
         a.name.includes(os) &&
         a.name.includes(arch) &&
-        !a.name.endsWith(".sha256")
+        !a.name.endsWith(".sha256") &&
+        !a.name.endsWith(".zip")
     );
   };
 

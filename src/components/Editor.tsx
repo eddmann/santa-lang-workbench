@@ -3,6 +3,7 @@ import { useAppDispatch, useAppSelector } from "../store";
 import { updateTabContent } from "../store/slices/tabsSlice";
 import { startExecution, resetExecution } from "../store/slices/executionSlice";
 import { openDownloadModal, formatCode } from "../store/slices/formatterSlice";
+import { registerSantaLang } from "../lib/santa-lang-monarch";
 import type { editor } from "monaco-editor";
 import { useRef, useCallback, useEffect } from "react";
 import type { FormatterStatus } from "../lib/types";
@@ -37,6 +38,9 @@ export function Editor() {
   const handleEditorMount = useCallback(
     (editor: editor.IStandaloneCodeEditor, monaco: typeof import("monaco-editor")) => {
       editorRef.current = editor;
+
+      // Register santa-lang language
+      registerSantaLang(monaco);
 
       // Run command (Cmd+Enter)
       editor.addCommand(monaco.KeyMod.CtrlCmd | monaco.KeyCode.Enter, () => {
@@ -127,7 +131,7 @@ export function Editor() {
   return (
     <MonacoEditor
       height="100%"
-      language="rust"
+      language="santa-lang"
       theme="vs-dark"
       value={activeTab.content}
       onChange={handleChange}

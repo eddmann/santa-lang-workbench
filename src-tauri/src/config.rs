@@ -6,7 +6,6 @@ pub const IMPLEMENTATIONS: &[(&str, &str, &str)] = &[
     ("dasher", "Dasher", "eddmann/santa-lang-dasher"),
     ("donner", "Donner", "eddmann/santa-lang-donner"),
     ("prancer", "Prancer", "eddmann/santa-lang-prancer"),
-    ("vixen", "Vixen", "eddmann/santa-lang-vixen"),
 ];
 
 pub fn get_repo_for_codename(codename: &str) -> Option<&'static str> {
