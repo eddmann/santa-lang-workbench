@@ -1,5 +1,6 @@
 import type { PartResult as PartResultType } from "../lib/types";
 import { CheckCircleIcon, ClockIcon, CpuChipIcon } from "@heroicons/react/20/solid";
+import { formatDuration } from "../lib/utils";
 
 interface Props {
   label: string;
@@ -30,13 +31,6 @@ export function PartResult({ label, part }: Props) {
           </div>
         );
     }
-  };
-
-  const formatDuration = (ms: number | null) => {
-    if (ms === null) return "";
-    if (ms < 1) return `${(ms * 1000).toFixed(0)}µs`;
-    if (ms < 1000) return `${ms.toFixed(1)}ms`;
-    return `${(ms / 1000).toFixed(2)}s`;
   };
 
   return (

@@ -12,10 +12,12 @@ import {
   Squares2X2Icon,
   ListBulletIcon,
   TrashIcon,
+  ChartBarIcon,
 } from "@heroicons/react/20/solid";
+import { PerformanceChart } from "./PerformanceChart";
 import type { ExecutionInstance } from "../lib/types";
 
-type ViewMode = "tabs" | "grid";
+type ViewMode = "tabs" | "grid" | "chart";
 
 export function MultiOutputPanel() {
   const dispatch = useAppDispatch();
@@ -103,7 +105,7 @@ export function MultiOutputPanel() {
         <div className="flex items-center gap-2">
           <CommandLineIcon className="w-4 h-4 text-[var(--color-text-muted)]" />
           <h2 className="text-sm font-semibold text-[var(--color-text-secondary)]">
-            Comparison ({sortedExecutions.length})
+            {viewMode === "chart" ? "Performance" : "Comparison"} ({sortedExecutions.length})
           </h2>
         </div>
         <div className="flex items-center gap-1">
@@ -129,6 +131,17 @@ export function MultiOutputPanel() {
             title="Grid view"
           >
             <Squares2X2Icon className="w-4 h-4" />
+          </button>
+          <button
+            onClick={() => setViewMode("chart")}
+            className={`p-1.5 rounded transition-colors ${
+              viewMode === "chart"
+                ? "bg-[var(--color-surface-hover)] text-[var(--color-text-primary)]"
+                : "text-[var(--color-text-muted)] hover:text-[var(--color-text-primary)]"
+            }`}
+            title="Performance chart"
+          >
+            <ChartBarIcon className="w-4 h-4" />
           </button>
           <div className="w-px h-4 bg-[var(--color-border)] mx-1" />
           <button
@@ -157,14 +170,15 @@ export function MultiOutputPanel() {
       )}
 
       {/* Content area */}
-      {viewMode === "tabs" ? (
+      {viewMode === "tabs" && (
         <div className="flex-1 overflow-hidden">
           <OutputPanel
             execution={activeExecution}
             showHeader={false}
           />
         </div>
-      ) : (
+      )}
+      {viewMode === "grid" && (
         <div className="flex-1 overflow-auto p-2">
           <div className={`grid gap-2 h-full ${
             sortedExecutions.length <= 2
@@ -185,6 +199,11 @@ export function MultiOutputPanel() {
               </div>
             ))}
           </div>
+        </div>
+      )}
+      {viewMode === "chart" && (
+        <div className="flex-1 overflow-auto p-4">
+          <PerformanceChart executions={sortedExecutions} />
         </div>
       )}
     </div>

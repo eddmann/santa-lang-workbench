@@ -1,18 +1,12 @@
 import type { ScriptExecutionState } from "../lib/types";
 import { CheckCircleIcon } from "@heroicons/react/20/solid";
+import { formatDuration } from "../lib/utils";
 
 interface Props {
   result: ScriptExecutionState;
 }
 
 export function ScriptOutput({ result }: Props) {
-  const formatDuration = (ms: number | null) => {
-    if (ms === null) return "";
-    if (ms < 1) return `${(ms * 1000).toFixed(0)}µs`;
-    if (ms < 1000) return `${ms.toFixed(1)}ms`;
-    return `${(ms / 1000).toFixed(2)}s`;
-  };
-
   return (
     <div className="space-y-4">
       <div className="flex items-start gap-3">
