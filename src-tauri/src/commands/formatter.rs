@@ -6,15 +6,27 @@ use std::process::Command;
 use std::sync::Mutex;
 use tauri::{AppHandle, State};
 
-/// Check if a version tag represents >= 1.0.0
-/// Handles tags like "v1.0.0", "1.0.0", "v1.2.3", etc.
-fn is_version_gte_1_0_0(tag: &str) -> bool {
+/// Check if a version tag represents >= 1.0.1
+/// Handles tags like "v1.0.1", "1.0.1", "v1.2.3", etc.
+fn is_version_gte_1_0_1(tag: &str) -> bool {
     let version = tag.strip_prefix('v').unwrap_or(tag);
-    version
-        .split('.')
-        .next()
+    let parts: Vec<&str> = version.split('.').collect();
+
+    let major = parts
+        .first()
         .and_then(|s| s.parse::<u32>().ok())
-        .map_or(false, |major| major >= 1)
+        .unwrap_or(0);
+    let minor = parts
+        .get(1)
+        .and_then(|s| s.parse::<u32>().ok())
+        .unwrap_or(0);
+    let patch = parts
+        .get(2)
+        .and_then(|s| s.parse::<u32>().ok())
+        .unwrap_or(0);
+
+    // >= 1.0.1
+    major > 1 || (major == 1 && minor > 0) || (major == 1 && minor == 0 && patch >= 1)
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -53,23 +65,25 @@ pub struct Asset {
     pub size: u64,
 }
 
+#[derive(Deserialize)]
+struct VersionInfo {
+    version: String,
+}
+
 fn detect_formatter_version(path: &PathBuf) -> Option<String> {
-    let output = Command::new(path).arg("--version").output().ok()?;
+    let output = Command::new(path)
+        .args(["--version", "-o", "json"])
+        .output()
+        .ok()?;
 
     if !output.status.success() {
         return None;
     }
 
-    let version_str = String::from_utf8_lossy(&output.stdout);
-    let version_str = version_str.trim();
+    let stdout = String::from_utf8_lossy(&output.stdout);
+    let info: VersionInfo = serde_json::from_str(&stdout).ok()?;
 
-    // Parse version output, e.g., "santa-lang Comet 0.0.13" or "Comet 0.0.13"
-    let parts: Vec<&str> = version_str.split_whitespace().collect();
-    if parts.len() >= 2 {
-        Some(parts.last()?.to_string())
-    } else {
-        None
-    }
+    Some(info.version)
 }
 
 #[tauri::command]
@@ -113,10 +127,10 @@ pub async fn fetch_formatter_releases() -> Result<Vec<Release>, String> {
 
     let releases: Vec<Release> = response.json().await.map_err(|e| e.to_string())?;
 
-    // Filter to only releases >= 1.0.0 (when JSONL support was added)
+    // Filter to only releases >= 1.0.1 (when JSON version output was added)
     let filtered: Vec<Release> = releases
         .into_iter()
-        .filter(|r| is_version_gte_1_0_0(&r.tag_name))
+        .filter(|r| is_version_gte_1_0_1(&r.tag_name))
         .collect();
 
     Ok(filtered)

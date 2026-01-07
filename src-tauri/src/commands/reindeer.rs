@@ -1,8 +1,15 @@
 use crate::state::{AppState, Reindeer};
+use serde::Deserialize;
 use std::path::PathBuf;
 use std::process::Command;
 use std::sync::Mutex;
 use tauri::State;
+
+#[derive(Deserialize)]
+struct VersionInfo {
+    reindeer: String,
+    version: String,
+}
 
 #[tauri::command]
 pub fn get_reindeer(state: State<'_, Mutex<AppState>>) -> Result<Vec<Reindeer>, String> {
@@ -62,39 +69,20 @@ pub fn detect_reindeer(path: String) -> Result<(String, String, String), String>
 
 fn detect_reindeer_info(path: &PathBuf) -> Result<(String, String, String), String> {
     let output = Command::new(path)
-        .arg("--version")
+        .args(["--version", "-o", "json"])
         .output()
         .map_err(|e| format!("Failed to execute: {}", e))?;
 
-    let version_str = String::from_utf8_lossy(&output.stdout);
-    let version_str = version_str.trim();
+    if !output.status.success() {
+        return Err("Version command failed".to_string());
+    }
 
-    let parts: Vec<&str> = version_str.split_whitespace().collect();
+    let stdout = String::from_utf8_lossy(&output.stdout);
+    let info: VersionInfo = serde_json::from_str(&stdout)
+        .map_err(|e| format!("Failed to parse version JSON: {}", e))?;
 
-    // Handle both formats:
-    // - 3 parts: "santa-lang Comet 0.0.13" (name_part at [1], version at [2])
-    // - 2 parts: "Comet 0.0.13" or "santa-lang-comet 0.0.13" (name_part at [0], version at [1])
-    let (name_part, version) = if parts.len() >= 3 && parts[0] == "santa-lang" {
-        (parts[1].to_lowercase(), parts[2].to_string())
-    } else if parts.len() >= 2 {
-        (parts[0].to_lowercase(), parts[1].to_string())
-    } else {
-        return Err("Could not parse version output".to_string());
-    };
+    // Derive codename from reindeer name (lowercase)
+    let codename = info.reindeer.to_lowercase();
 
-    let (name, codename) = if name_part.contains("comet") || name_part == "comet" {
-        ("Comet".to_string(), "comet".to_string())
-    } else if name_part.contains("blitzen") || name_part == "blitzen" {
-        ("Blitzen".to_string(), "blitzen".to_string())
-    } else if name_part.contains("dasher") || name_part == "dasher" {
-        ("Dasher".to_string(), "dasher".to_string())
-    } else if name_part.contains("donner") || name_part == "donner" {
-        ("Donner".to_string(), "donner".to_string())
-    } else if name_part.contains("prancer") || name_part == "prancer" {
-        ("Prancer".to_string(), "prancer".to_string())
-    } else {
-        ("Unknown".to_string(), "unknown".to_string())
-    };
-
-    Ok((name, codename, version))
+    Ok((info.reindeer, codename, info.version))
 }
