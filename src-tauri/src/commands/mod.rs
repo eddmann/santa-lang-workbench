@@ -1,3 +1,4 @@
+pub mod aoc;
 pub mod execution;
 pub mod formatter;
 pub mod github;

@@ -120,3 +120,11 @@ export interface ExecutionInstance {
   exitCode: number | null;
   startedAt: number;
 }
+
+export interface AocPuzzle {
+  year: number;
+  day: number;
+  title: string;
+  description_html: string;
+  input: string | null;
+}

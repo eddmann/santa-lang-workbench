@@ -9,13 +9,13 @@ import { checkFormatterStatus } from "./store/slices/formatterSlice";
 import { Toolbar } from "./components/Toolbar";
 import { EditorTabs } from "./components/EditorTabs";
 import { Editor } from "./components/Editor";
-import { OutputPanel } from "./components/OutputPanel";
-import { MultiOutputPanel } from "./components/MultiOutputPanel";
+import { SplitOutputPanel } from "./components/SplitOutputPanel";
 import { SettingsModal } from "./components/SettingsModal";
 import { FormatterDownloadModal } from "./components/FormatterDownloadModal";
 import { StatusBar } from "./components/StatusBar";
 import { getTheme, applyTheme } from "./lib/themes";
 import { useMenuEvents } from "./hooks/useMenuEvents";
+import { useAocDetection } from "./hooks/useAocDetection";
 
 function AppContent() {
   const dispatch = useAppDispatch();
@@ -44,6 +44,9 @@ function AppContent() {
   // Handle native menu events
   useMenuEvents();
 
+  // Detect AoC references in source code
+  useAocDetection();
+
   // Get the first execution for single-output mode
   const singleExecution = useMemo(() => {
     const execs = Object.values(executions).filter((e) => !e.id.startsWith("pending_"));
@@ -64,13 +67,10 @@ function AppContent() {
         <Separator className="resize-handle" />
         {/* Output Panel */}
         <Panel defaultSize="400px" minSize="300px" maxSize="900px">
-          <div className="h-full bg-[var(--color-background)]">
-            {showMultiOutput ? (
-              <MultiOutputPanel />
-            ) : (
-              <OutputPanel execution={singleExecution} />
-            )}
-          </div>
+          <SplitOutputPanel
+            singleExecution={singleExecution}
+            showMultiOutput={showMultiOutput}
+          />
         </Panel>
       </Group>
       <StatusBar />

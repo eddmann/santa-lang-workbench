@@ -5,6 +5,7 @@ import reindeerReducer from "./slices/reindeerSlice";
 import executionReducer from "./slices/executionSlice";
 import settingsReducer from "./slices/settingsSlice";
 import formatterReducer from "./slices/formatterSlice";
+import aocReducer from "./slices/aocSlice";
 
 export const store = configureStore({
   reducer: {
@@ -13,6 +14,7 @@ export const store = configureStore({
     execution: executionReducer,
     settings: settingsReducer,
     formatter: formatterReducer,
+    aoc: aocReducer,
   },
 });
 
