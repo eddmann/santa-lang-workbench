@@ -1,4 +1,4 @@
-# Santa Lang Studio
+# santa-lang Workbench
 
 A cross-platform desktop editor for [santa-lang](https://eddmann.com/santa-lang/), a functional programming language designed for solving Advent of Code puzzles.
 
@@ -41,7 +41,7 @@ bun tauri build
 
 ## How It Works
 
-Santa Lang Studio spawns CLI reindeer with `-o jsonl` flag to stream execution results. The JSONL format provides:
+santa-lang Workbench spawns CLI reindeer with `-o jsonl` flag to stream execution results. The JSONL format provides:
 
 1. **Initial state** - Template with all parts set to "pending"
 2. **JSON Patches** - RFC 6902 patches as execution progresses

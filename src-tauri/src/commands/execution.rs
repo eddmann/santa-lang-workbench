@@ -47,7 +47,7 @@ pub async fn run_execution(
 
     // Write source to a temporary file
     let temp_dir = std::env::temp_dir();
-    let temp_file = temp_dir.join(format!("santa-studio-{}.santa", uuid::Uuid::new_v4()));
+    let temp_file = temp_dir.join(format!("santa-workbench-{}.santa", uuid::Uuid::new_v4()));
     std::fs::write(&temp_file, &source).map_err(|e| e.to_string())?;
 
     args.push(temp_file.to_string_lossy().to_string());
