@@ -195,8 +195,8 @@ pub fn format_code(
     }
 
     // Run formatter with source via stdin
-    use std::process::Stdio;
     use std::io::Write;
+    use std::process::Stdio;
 
     let mut child = Command::new(formatter_path)
         .arg("-f")
@@ -208,7 +208,9 @@ pub fn format_code(
 
     // Write source to stdin
     if let Some(mut stdin) = child.stdin.take() {
-        stdin.write_all(source.as_bytes()).map_err(|e| e.to_string())?;
+        stdin
+            .write_all(source.as_bytes())
+            .map_err(|e| e.to_string())?;
     }
 
     let output = child.wait_with_output().map_err(|e| e.to_string())?;

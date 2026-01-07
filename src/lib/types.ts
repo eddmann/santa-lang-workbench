@@ -45,6 +45,7 @@ export interface Asset {
 }
 
 export interface ExecutionEvent {
+  execution_id: string;
   event_type: "initial" | "patch" | "console" | "complete" | "error";
   data: unknown;
 }
@@ -107,4 +108,15 @@ export interface TabFile {
   path: string | null;
   content: string;
   isDirty: boolean;
+}
+
+export interface ExecutionInstance {
+  id: string;
+  reindeer: Reindeer;
+  status: ExecutionStatus;
+  mode: ExecutionMode | null;
+  result: ExecutionState;
+  consoleOutput: string[];
+  exitCode: number | null;
+  startedAt: number;
 }

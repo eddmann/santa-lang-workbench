@@ -1,9 +1,11 @@
+import { useMemo } from "react";
 import { useAppSelector } from "../store";
 import {
   CpuChipIcon,
   CheckCircleIcon,
   ExclamationCircleIcon,
   DocumentIcon,
+  Squares2X2Icon,
 } from "@heroicons/react/20/solid";
 
 export function StatusBar() {
@@ -11,49 +13,84 @@ export function StatusBar() {
   const { reindeer, selectedId } = useAppSelector(
     (state) => state.reindeer
   );
-  const { status } = useAppSelector((state) => state.execution);
+  const { executions, multiSelectMode, selectedReindeerIds } = useAppSelector(
+    (state) => state.execution
+  );
 
   const activeTab = tabs.find((t) => t.id === activeTabId);
   const selectedReindeer = reindeer.find((r) => r.id === selectedId);
+
+  // Compute aggregated status from all executions
+  const aggregatedStatus = useMemo(() => {
+    const executionList = Object.values(executions).filter(
+      (e) => !e.id.startsWith("pending_")
+    );
+
+    if (executionList.length === 0) return "idle";
+
+    const hasRunning = executionList.some((e) => e.status === "running");
+    if (hasRunning) return "running";
+
+    const hasError = executionList.some((e) => e.status === "error");
+    if (hasError) return "error";
+
+    const allComplete = executionList.every((e) => e.status === "complete");
+    if (allComplete) return "complete";
+
+    return "idle";
+  }, [executions]);
+
+  const executionCount = Object.values(executions).filter(
+    (e) => !e.id.startsWith("pending_")
+  ).length;
 
   return (
     <div className="flex items-center justify-between h-6 px-3 bg-[var(--color-surface)]
                   border-t border-[var(--color-border-subtle)] text-xs select-none">
       {/* Left section */}
       <div className="flex items-center gap-3">
-        {/* Reindeer */}
-        <div className="flex items-center gap-1.5">
-          <CpuChipIcon className="w-3.5 h-3.5 text-[var(--color-text-faint)]" />
-          {selectedReindeer ? (
+        {/* Reindeer / Multi-select indicator */}
+        {multiSelectMode ? (
+          <div className="flex items-center gap-1.5">
+            <Squares2X2Icon className="w-3.5 h-3.5 text-[var(--color-accent)]" />
             <span className="text-[var(--color-text-muted)]">
-              {selectedReindeer.name}
-              <span className="text-[var(--color-text-faint)] ml-1">{selectedReindeer.version}</span>
+              {selectedReindeerIds.length} reindeer selected
             </span>
-          ) : (
-            <span className="text-[var(--color-warning)]">No reindeer</span>
-          )}
-        </div>
+          </div>
+        ) : (
+          <div className="flex items-center gap-1.5">
+            <CpuChipIcon className="w-3.5 h-3.5 text-[var(--color-text-faint)]" />
+            {selectedReindeer ? (
+              <span className="text-[var(--color-text-muted)]">
+                {selectedReindeer.name}
+                <span className="text-[var(--color-text-faint)] ml-1">{selectedReindeer.version}</span>
+              </span>
+            ) : (
+              <span className="text-[var(--color-warning)]">No reindeer</span>
+            )}
+          </div>
+        )}
 
         {/* Divider */}
         <div className="w-px h-3 bg-[var(--color-border-subtle)]" />
 
         {/* Status */}
-        {status === "running" && (
+        {aggregatedStatus === "running" && (
           <div className="flex items-center gap-1.5 text-[var(--color-info)]">
             <span className="relative flex h-2 w-2">
               <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-[var(--color-info)] opacity-75"></span>
               <span className="relative inline-flex rounded-full h-2 w-2 bg-[var(--color-info)]"></span>
             </span>
-            <span>Running</span>
+            <span>Running{executionCount > 1 ? ` (${executionCount})` : ""}</span>
           </div>
         )}
-        {status === "complete" && (
+        {aggregatedStatus === "complete" && (
           <div className="flex items-center gap-1.5 text-[var(--color-success)]">
             <CheckCircleIcon className="w-3.5 h-3.5" />
-            <span>Complete</span>
+            <span>Complete{executionCount > 1 ? ` (${executionCount})` : ""}</span>
           </div>
         )}
-        {status === "error" && (
+        {aggregatedStatus === "error" && (
           <div className="flex items-center gap-1.5 text-[var(--color-error)]">
             <ExclamationCircleIcon className="w-3.5 h-3.5" />
             <span>Error</span>

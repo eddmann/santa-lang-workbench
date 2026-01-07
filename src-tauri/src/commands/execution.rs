@@ -7,6 +7,7 @@ use tauri::{Emitter, State, Window};
 
 #[derive(Clone, Serialize)]
 pub struct ExecutionEvent {
+    pub execution_id: String,
     pub event_type: String, // "initial", "patch", "console", "complete", "error"
     pub data: serde_json::Value,
 }
@@ -15,6 +16,7 @@ pub struct ExecutionEvent {
 pub async fn run_execution(
     window: Window,
     state: State<'_, Mutex<AppState>>,
+    execution_id: String,
     impl_id: String,
     source: String,
     mode: String, // "run", "test", "script"
@@ -22,10 +24,7 @@ pub async fn run_execution(
 ) -> Result<(), String> {
     let (reindeer_path, aoc_token) = {
         let state = state.lock().map_err(|e| e.to_string())?;
-        let reindeer = state
-            .reindeer
-            .get(&impl_id)
-            .ok_or("Reindeer not found")?;
+        let reindeer = state.reindeer.get(&impl_id).ok_or("Reindeer not found")?;
         (
             reindeer.path.clone(),
             state.settings.aoc_session_token.clone(),
@@ -70,13 +69,15 @@ pub async fn run_execution(
         cmd.env("SANTA_CLI_SESSION_TOKEN", token);
     }
 
-    let mut child = cmd.spawn().map_err(|e| format!("Failed to spawn process: {}", e))?;
+    let mut child = cmd
+        .spawn()
+        .map_err(|e| format!("Failed to spawn process: {}", e))?;
 
-    // Store process ID for potential cancellation
+    // Store process ID for potential cancellation (keyed by execution_id)
     let pid = child.id();
     {
         let mut state = state.lock().map_err(|e| e.to_string())?;
-        state.running_processes.insert(impl_id.clone(), pid);
+        state.running_processes.insert(execution_id.clone(), pid);
     }
 
     // Read stdout line by line
@@ -98,12 +99,14 @@ pub async fn run_execution(
                     let event = if is_first_line {
                         is_first_line = false;
                         ExecutionEvent {
+                            execution_id: execution_id.clone(),
                             event_type: "initial".to_string(),
                             data: json,
                         }
                     } else {
                         // Subsequent lines are JSON Patch arrays
                         ExecutionEvent {
+                            execution_id: execution_id.clone(),
                             event_type: "patch".to_string(),
                             data: json,
                         }
@@ -115,6 +118,7 @@ pub async fn run_execution(
                     let _ = window.emit(
                         "execution-event",
                         ExecutionEvent {
+                            execution_id: execution_id.clone(),
                             event_type: "console".to_string(),
                             data: serde_json::json!({ "message": line }),
                         },
@@ -125,6 +129,7 @@ pub async fn run_execution(
                 let _ = window.emit(
                     "execution-event",
                     ExecutionEvent {
+                        execution_id: execution_id.clone(),
                         event_type: "error".to_string(),
                         data: serde_json::json!({ "message": e.to_string() }),
                     },
@@ -140,7 +145,7 @@ pub async fn run_execution(
     // Remove from running processes
     {
         let mut state = state.lock().map_err(|e| e.to_string())?;
-        state.running_processes.remove(&impl_id);
+        state.running_processes.remove(&execution_id);
     }
 
     // Clean up temp file
@@ -150,6 +155,7 @@ pub async fn run_execution(
     let _ = window.emit(
         "execution-event",
         ExecutionEvent {
+            execution_id: execution_id.clone(),
             event_type: "complete".to_string(),
             data: serde_json::json!({ "exit_code": exit_code }),
         },
@@ -161,20 +167,18 @@ pub async fn run_execution(
 #[tauri::command]
 pub fn cancel_execution(
     state: State<'_, Mutex<AppState>>,
-    impl_id: String,
+    execution_id: String,
 ) -> Result<(), String> {
     let pid = {
         let state = state.lock().map_err(|e| e.to_string())?;
-        state.running_processes.get(&impl_id).copied()
+        state.running_processes.get(&execution_id).copied()
     };
 
     if let Some(pid) = pid {
         #[cfg(unix)]
         {
             use std::process::Command;
-            let _ = Command::new("kill")
-                .args(["-9", &pid.to_string()])
-                .output();
+            let _ = Command::new("kill").args(["-9", &pid.to_string()]).output();
         }
 
         #[cfg(windows)]
@@ -186,7 +190,7 @@ pub fn cancel_execution(
         }
 
         let mut state = state.lock().map_err(|e| e.to_string())?;
-        state.running_processes.remove(&impl_id);
+        state.running_processes.remove(&execution_id);
     }
 
     Ok(())

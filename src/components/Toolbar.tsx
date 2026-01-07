@@ -1,6 +1,12 @@
 import { useMemo } from "react";
 import { useAppDispatch, useAppSelector } from "../store";
-import { startExecution, cancelExecution, resetExecution } from "../store/slices/executionSlice";
+import {
+  startExecution,
+  startMultiExecution,
+  cancelAllExecutions,
+  clearAllExecutions,
+  setMultiSelectMode,
+} from "../store/slices/executionSlice";
 import { selectReindeer } from "../store/slices/reindeerSlice";
 import { openSettingsModal } from "../store/slices/settingsSlice";
 import { addTab, saveTab, updateTabContent } from "../store/slices/tabsSlice";
@@ -18,8 +24,10 @@ import {
   Cog6ToothIcon,
   ChevronDownIcon,
   CodeBracketIcon,
+  Squares2X2Icon,
 } from "@heroicons/react/20/solid";
 import { toast } from "sonner";
+import { ReindeerMultiSelect } from "./ReindeerMultiSelect";
 
 export function Toolbar() {
   const dispatch = useAppDispatch();
@@ -27,14 +35,20 @@ export function Toolbar() {
   const { reindeer, selectedId } = useAppSelector(
     (state) => state.reindeer
   );
-  const { status } = useAppSelector((state) => state.execution);
+  const { executions, multiSelectMode, selectedReindeerIds } = useAppSelector(
+    (state) => state.execution
+  );
   const { status: formatterStatus, isFormatting } = useAppSelector(
     (state) => state.formatter
   );
   const { format_on_save } = useAppSelector((state) => state.settings.settings);
 
   const activeTab = tabs.find((t) => t.id === activeTabId);
-  const isRunning = status === "running";
+
+  // Check if any execution is running
+  const hasRunningExecution = Object.values(executions).some(
+    (e) => e.status === "running"
+  );
 
   // Derive selected reindeer and available codenames/versions
   const selectedR = reindeer.find((r) => r.id === selectedId);
@@ -64,39 +78,81 @@ export function Toolbar() {
   };
 
   const handleRun = () => {
-    if (!activeTab || !selectedId) return;
-    dispatch(resetExecution());
-    dispatch(
-      startExecution({
-        implId: selectedId,
-        source: activeTab.content,
-        mode: "run",
-        workingDir: activeTab.path
-          ? activeTab.path.substring(0, activeTab.path.lastIndexOf("/"))
-          : undefined,
-      })
-    );
+    if (!activeTab) return;
+
+    if (multiSelectMode) {
+      if (selectedReindeerIds.length === 0) {
+        toast.error("No reindeer selected", {
+          description: "Select at least one reindeer to run.",
+        });
+        return;
+      }
+      dispatch(clearAllExecutions());
+      dispatch(
+        startMultiExecution({
+          reindeerIds: selectedReindeerIds,
+          source: activeTab.content,
+          mode: "run",
+          workingDir: activeTab.path
+            ? activeTab.path.substring(0, activeTab.path.lastIndexOf("/"))
+            : undefined,
+        })
+      );
+    } else {
+      if (!selectedId) return;
+      dispatch(clearAllExecutions());
+      dispatch(
+        startExecution({
+          implId: selectedId,
+          source: activeTab.content,
+          mode: "run",
+          workingDir: activeTab.path
+            ? activeTab.path.substring(0, activeTab.path.lastIndexOf("/"))
+            : undefined,
+        })
+      );
+    }
   };
 
   const handleTest = () => {
-    if (!activeTab || !selectedId) return;
-    dispatch(resetExecution());
-    dispatch(
-      startExecution({
-        implId: selectedId,
-        source: activeTab.content,
-        mode: "test",
-        workingDir: activeTab.path
-          ? activeTab.path.substring(0, activeTab.path.lastIndexOf("/"))
-          : undefined,
-      })
-    );
+    if (!activeTab) return;
+
+    if (multiSelectMode) {
+      if (selectedReindeerIds.length === 0) {
+        toast.error("No reindeer selected", {
+          description: "Select at least one reindeer to test.",
+        });
+        return;
+      }
+      dispatch(clearAllExecutions());
+      dispatch(
+        startMultiExecution({
+          reindeerIds: selectedReindeerIds,
+          source: activeTab.content,
+          mode: "test",
+          workingDir: activeTab.path
+            ? activeTab.path.substring(0, activeTab.path.lastIndexOf("/"))
+            : undefined,
+        })
+      );
+    } else {
+      if (!selectedId) return;
+      dispatch(clearAllExecutions());
+      dispatch(
+        startExecution({
+          implId: selectedId,
+          source: activeTab.content,
+          mode: "test",
+          workingDir: activeTab.path
+            ? activeTab.path.substring(0, activeTab.path.lastIndexOf("/"))
+            : undefined,
+        })
+      );
+    }
   };
 
   const handleStop = () => {
-    if (selectedId) {
-      dispatch(cancelExecution(selectedId));
-    }
+    dispatch(cancelAllExecutions());
   };
 
   const handleOpen = async () => {
@@ -163,12 +219,21 @@ export function Toolbar() {
     dispatch(saveTab({ id: activeTab.id, path, name }));
   };
 
+  const handleToggleMultiMode = () => {
+    dispatch(setMultiSelectMode(!multiSelectMode));
+  };
+
+  // Determine if run/test buttons should be disabled
+  const canRun = multiSelectMode
+    ? activeTab && selectedReindeerIds.length > 0
+    : activeTab && selectedId;
+
   return (
     <div className="flex items-center justify-between h-12 px-3 bg-[var(--color-surface)] border-b border-[var(--color-border-subtle)]">
       {/* Left section - Primary actions */}
       <div className="flex items-center gap-1.5">
         {/* Run/Stop Button - Primary CTA */}
-        {isRunning ? (
+        {hasRunningExecution ? (
           <button
             onClick={handleStop}
             className="group relative flex items-center gap-2 h-8 px-4 rounded-md font-medium text-sm
@@ -184,7 +249,7 @@ export function Toolbar() {
         ) : (
           <button
             onClick={handleRun}
-            disabled={!activeTab || !selectedId}
+            disabled={!canRun}
             className="group relative flex items-center gap-2 h-8 px-4 rounded-md font-medium text-sm
                        bg-[var(--color-accent)] text-[#0f1419]
                        shadow-[inset_0_1px_0_rgba(255,255,255,0.2),0_1px_2px_rgba(0,0,0,0.2),var(--shadow-glow-accent)]
@@ -193,7 +258,7 @@ export function Toolbar() {
                        transition-all duration-150"
           >
             <PlayIcon className="w-4 h-4" />
-            <span>Run</span>
+            <span>{multiSelectMode ? "Run All" : "Run"}</span>
             <div className="absolute inset-0 rounded-md bg-gradient-to-b from-white/15 to-transparent pointer-events-none" />
           </button>
         )}
@@ -201,7 +266,7 @@ export function Toolbar() {
         {/* Test Button - Secondary */}
         <button
           onClick={handleTest}
-          disabled={!activeTab || !selectedId || isRunning}
+          disabled={!canRun || hasRunningExecution}
           className="group relative flex items-center gap-2 h-8 px-3.5 rounded-md font-medium text-sm
                      bg-[var(--color-surface-elevated)] text-[var(--color-text-secondary)]
                      border border-[var(--color-border)]
@@ -210,62 +275,80 @@ export function Toolbar() {
                      transition-all duration-150"
         >
           <BeakerIcon className="w-4 h-4" />
-          <span>Test</span>
+          <span>{multiSelectMode ? "Test All" : "Test"}</span>
         </button>
 
         {/* Divider */}
         <div className="w-px h-5 bg-[var(--color-border)] mx-2" />
 
-        {/* Reindeer Selector - Two-tier */}
-        <div className="flex items-center gap-1.5">
-          {/* Codename selector */}
-          <div className="relative">
-            <select
-              value={selectedCodename || ""}
-              onChange={(e) => handleCodenameChange(e.target.value)}
-              className="appearance-none h-8 pl-3 pr-7 rounded-md text-sm font-medium
-                         bg-[var(--color-surface-elevated)] text-[var(--color-text-secondary)]
-                         border border-[var(--color-border)]
-                         hover:bg-[var(--color-surface-hover)] hover:text-[var(--color-text-primary)]
-                         focus:outline-none focus:ring-2 focus:ring-[var(--color-accent)] focus:ring-offset-1 focus:ring-offset-[var(--color-surface)]
-                         cursor-pointer transition-colors duration-150"
-            >
-              {codenames.length === 0 ? (
-                <option value="">No reindeer</option>
-              ) : (
-                codenames.map((codename) => (
-                  <option key={codename} value={codename}>
-                    {reindeerByCodename[codename][0].name}
-                  </option>
-                ))
-              )}
-            </select>
-            <ChevronDownIcon className="absolute right-1.5 top-1/2 -translate-y-1/2 w-4 h-4 text-[var(--color-text-muted)] pointer-events-none" />
-          </div>
+        {/* Multi-select toggle */}
+        <button
+          onClick={handleToggleMultiMode}
+          className={`flex items-center justify-center w-8 h-8 rounded-md
+                     transition-colors duration-150
+                     ${multiSelectMode
+                       ? "bg-[var(--color-accent)] text-[#0f1419]"
+                       : "text-[var(--color-text-muted)] hover:text-[var(--color-text-primary)] hover:bg-[var(--color-surface-elevated)]"
+                     }`}
+          title={multiSelectMode ? "Switch to single mode" : "Switch to multi-compare mode"}
+        >
+          <Squares2X2Icon className="w-4 h-4" />
+        </button>
 
-          {/* Version selector */}
-          {versionsForCodename.length > 0 && (
+        {/* Reindeer Selector */}
+        {multiSelectMode ? (
+          <ReindeerMultiSelect />
+        ) : (
+          <div className="flex items-center gap-1.5">
+            {/* Codename selector */}
             <div className="relative">
               <select
-                value={selectedId || ""}
-                onChange={(e) => dispatch(selectReindeer(e.target.value))}
-                className="appearance-none h-8 pl-2.5 pr-6 rounded-md text-sm font-mono
-                           bg-[var(--color-surface-elevated)] text-[var(--color-text-muted)]
+                value={selectedCodename || ""}
+                onChange={(e) => handleCodenameChange(e.target.value)}
+                className="appearance-none h-8 pl-3 pr-7 rounded-md text-sm font-medium
+                           bg-[var(--color-surface-elevated)] text-[var(--color-text-secondary)]
                            border border-[var(--color-border)]
                            hover:bg-[var(--color-surface-hover)] hover:text-[var(--color-text-primary)]
                            focus:outline-none focus:ring-2 focus:ring-[var(--color-accent)] focus:ring-offset-1 focus:ring-offset-[var(--color-surface)]
                            cursor-pointer transition-colors duration-150"
               >
-                {versionsForCodename.map((r) => (
-                  <option key={r.id} value={r.id}>
-                    {r.version}
-                  </option>
-                ))}
+                {codenames.length === 0 ? (
+                  <option value="">No reindeer</option>
+                ) : (
+                  codenames.map((codename) => (
+                    <option key={codename} value={codename}>
+                      {reindeerByCodename[codename][0].name}
+                    </option>
+                  ))
+                )}
               </select>
-              <ChevronDownIcon className="absolute right-1 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-[var(--color-text-muted)] pointer-events-none" />
+              <ChevronDownIcon className="absolute right-1.5 top-1/2 -translate-y-1/2 w-4 h-4 text-[var(--color-text-muted)] pointer-events-none" />
             </div>
-          )}
-        </div>
+
+            {/* Version selector */}
+            {versionsForCodename.length > 0 && (
+              <div className="relative">
+                <select
+                  value={selectedId || ""}
+                  onChange={(e) => dispatch(selectReindeer(e.target.value))}
+                  className="appearance-none h-8 pl-2.5 pr-6 rounded-md text-sm font-mono
+                             bg-[var(--color-surface-elevated)] text-[var(--color-text-muted)]
+                             border border-[var(--color-border)]
+                             hover:bg-[var(--color-surface-hover)] hover:text-[var(--color-text-primary)]
+                             focus:outline-none focus:ring-2 focus:ring-[var(--color-accent)] focus:ring-offset-1 focus:ring-offset-[var(--color-surface)]
+                             cursor-pointer transition-colors duration-150"
+                >
+                  {versionsForCodename.map((r) => (
+                    <option key={r.id} value={r.id}>
+                      {r.version}
+                    </option>
+                  ))}
+                </select>
+                <ChevronDownIcon className="absolute right-1 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-[var(--color-text-muted)] pointer-events-none" />
+              </div>
+            )}
+          </div>
+        )}
       </div>
 
       {/* Right section - File actions */}

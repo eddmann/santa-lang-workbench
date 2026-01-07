@@ -5,9 +5,7 @@ use std::sync::Mutex;
 use tauri::State;
 
 #[tauri::command]
-pub fn get_reindeer(
-    state: State<'_, Mutex<AppState>>,
-) -> Result<Vec<Reindeer>, String> {
+pub fn get_reindeer(state: State<'_, Mutex<AppState>>) -> Result<Vec<Reindeer>, String> {
     let state = state.lock().map_err(|e| e.to_string())?;
     Ok(state.reindeer.values().cloned().collect())
 }

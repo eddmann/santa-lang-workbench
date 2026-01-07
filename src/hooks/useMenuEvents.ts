@@ -8,8 +8,9 @@ import { useAppDispatch, useAppSelector } from "../store";
 import { addTab, closeTab, saveTab, updateTabContent } from "../store/slices/tabsSlice";
 import {
   startExecution,
-  cancelExecution,
-  resetExecution,
+  startMultiExecution,
+  cancelAllExecutions,
+  clearAllExecutions,
 } from "../store/slices/executionSlice";
 import { openSettingsModal } from "../store/slices/settingsSlice";
 import {
@@ -21,11 +22,18 @@ export function useMenuEvents() {
   const dispatch = useAppDispatch();
   const { tabs, activeTabId } = useAppSelector((state) => state.tabs);
   const { selectedId } = useAppSelector((state) => state.reindeer);
-  const { status } = useAppSelector((state) => state.execution);
+  const { executions, multiSelectMode, selectedReindeerIds } = useAppSelector(
+    (state) => state.execution
+  );
   const { status: formatterStatus } = useAppSelector((state) => state.formatter);
   const { format_on_save } = useAppSelector((state) => state.settings.settings);
 
   const activeTab = tabs.find((t) => t.id === activeTabId);
+
+  // Check if any execution is running
+  const hasRunningExecution = Object.values(executions).some(
+    (e) => e.status === "running"
+  );
 
   useEffect(() => {
     const unlisten = listen<string>("menu-event", async (event) => {
@@ -101,8 +109,28 @@ export function useMenuEvents() {
           break;
 
         case "run":
-          if (activeTab && selectedId && status !== "running") {
-            dispatch(resetExecution());
+          if (!activeTab || hasRunningExecution) break;
+
+          if (multiSelectMode) {
+            if (selectedReindeerIds.length === 0) {
+              toast.error("No reindeer selected", {
+                description: "Select at least one reindeer to run.",
+              });
+              break;
+            }
+            dispatch(clearAllExecutions());
+            dispatch(
+              startMultiExecution({
+                reindeerIds: selectedReindeerIds,
+                source: activeTab.content,
+                mode: "run",
+                workingDir: activeTab.path
+                  ? activeTab.path.substring(0, activeTab.path.lastIndexOf("/"))
+                  : undefined,
+              })
+            );
+          } else if (selectedId) {
+            dispatch(clearAllExecutions());
             dispatch(
               startExecution({
                 implId: selectedId,
@@ -117,8 +145,28 @@ export function useMenuEvents() {
           break;
 
         case "test":
-          if (activeTab && selectedId && status !== "running") {
-            dispatch(resetExecution());
+          if (!activeTab || hasRunningExecution) break;
+
+          if (multiSelectMode) {
+            if (selectedReindeerIds.length === 0) {
+              toast.error("No reindeer selected", {
+                description: "Select at least one reindeer to test.",
+              });
+              break;
+            }
+            dispatch(clearAllExecutions());
+            dispatch(
+              startMultiExecution({
+                reindeerIds: selectedReindeerIds,
+                source: activeTab.content,
+                mode: "test",
+                workingDir: activeTab.path
+                  ? activeTab.path.substring(0, activeTab.path.lastIndexOf("/"))
+                  : undefined,
+              })
+            );
+          } else if (selectedId) {
+            dispatch(clearAllExecutions());
             dispatch(
               startExecution({
                 implId: selectedId,
@@ -133,8 +181,8 @@ export function useMenuEvents() {
           break;
 
         case "stop":
-          if (selectedId && status === "running") {
-            dispatch(cancelExecution(selectedId));
+          if (hasRunningExecution) {
+            dispatch(cancelAllExecutions());
           }
           break;
 
@@ -164,5 +212,5 @@ export function useMenuEvents() {
     return () => {
       unlisten.then((f) => f());
     };
-  }, [dispatch, activeTab, activeTabId, selectedId, status, formatterStatus, format_on_save]);
+  }, [dispatch, activeTab, activeTabId, selectedId, executions, multiSelectMode, selectedReindeerIds, hasRunningExecution, formatterStatus, format_on_save]);
 }

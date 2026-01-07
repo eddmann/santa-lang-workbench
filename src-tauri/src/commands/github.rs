@@ -143,7 +143,10 @@ fn extract_tarball(
     };
 
     if !binary_path.exists() {
-        return Err(format!("Binary not found at expected path: {:?}", binary_path));
+        return Err(format!(
+            "Binary not found at expected path: {:?}",
+            binary_path
+        ));
     }
 
     Ok(binary_path)

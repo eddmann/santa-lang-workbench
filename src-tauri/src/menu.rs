@@ -1,18 +1,38 @@
 use tauri::{
-    menu::{MenuBuilder, MenuItemBuilder, PredefinedMenuItem, SubmenuBuilder},
     AppHandle, Wry,
+    menu::{MenuBuilder, MenuItemBuilder, PredefinedMenuItem, SubmenuBuilder},
 };
 
 pub fn create_menu(app: &AppHandle) -> tauri::Result<tauri::menu::Menu<Wry>> {
     // File menu
     let file_menu = SubmenuBuilder::new(app, "File")
-        .item(&MenuItemBuilder::with_id("new-tab", "New Tab").accelerator("CmdOrCtrl+N").build(app)?)
-        .item(&MenuItemBuilder::with_id("open", "Open...").accelerator("CmdOrCtrl+O").build(app)?)
+        .item(
+            &MenuItemBuilder::with_id("new-tab", "New Tab")
+                .accelerator("CmdOrCtrl+N")
+                .build(app)?,
+        )
+        .item(
+            &MenuItemBuilder::with_id("open", "Open...")
+                .accelerator("CmdOrCtrl+O")
+                .build(app)?,
+        )
         .separator()
-        .item(&MenuItemBuilder::with_id("save", "Save").accelerator("CmdOrCtrl+S").build(app)?)
-        .item(&MenuItemBuilder::with_id("save-as", "Save As...").accelerator("CmdOrCtrl+Shift+S").build(app)?)
+        .item(
+            &MenuItemBuilder::with_id("save", "Save")
+                .accelerator("CmdOrCtrl+S")
+                .build(app)?,
+        )
+        .item(
+            &MenuItemBuilder::with_id("save-as", "Save As...")
+                .accelerator("CmdOrCtrl+Shift+S")
+                .build(app)?,
+        )
         .separator()
-        .item(&MenuItemBuilder::with_id("close-tab", "Close Tab").accelerator("CmdOrCtrl+W").build(app)?)
+        .item(
+            &MenuItemBuilder::with_id("close-tab", "Close Tab")
+                .accelerator("CmdOrCtrl+W")
+                .build(app)?,
+        )
         .build()?;
 
     // Edit menu (predefined items for native clipboard integration)
@@ -25,15 +45,31 @@ pub fn create_menu(app: &AppHandle) -> tauri::Result<tauri::menu::Menu<Wry>> {
         .item(&PredefinedMenuItem::paste(app, Some("Paste"))?)
         .item(&PredefinedMenuItem::select_all(app, Some("Select All"))?)
         .separator()
-        .item(&MenuItemBuilder::with_id("format", "Format Code").accelerator("CmdOrCtrl+Shift+F").build(app)?)
+        .item(
+            &MenuItemBuilder::with_id("format", "Format Code")
+                .accelerator("CmdOrCtrl+Shift+F")
+                .build(app)?,
+        )
         .build()?;
 
     // Run menu
     let run_menu = SubmenuBuilder::new(app, "Run")
-        .item(&MenuItemBuilder::with_id("run", "Run").accelerator("CmdOrCtrl+R").build(app)?)
-        .item(&MenuItemBuilder::with_id("test", "Run Tests").accelerator("CmdOrCtrl+Shift+T").build(app)?)
+        .item(
+            &MenuItemBuilder::with_id("run", "Run")
+                .accelerator("CmdOrCtrl+R")
+                .build(app)?,
+        )
+        .item(
+            &MenuItemBuilder::with_id("test", "Run Tests")
+                .accelerator("CmdOrCtrl+Shift+T")
+                .build(app)?,
+        )
         .separator()
-        .item(&MenuItemBuilder::with_id("stop", "Stop").accelerator("CmdOrCtrl+.").build(app)?)
+        .item(
+            &MenuItemBuilder::with_id("stop", "Stop")
+                .accelerator("CmdOrCtrl+.")
+                .build(app)?,
+        )
         .build()?;
 
     // Window menu
@@ -41,7 +77,10 @@ pub fn create_menu(app: &AppHandle) -> tauri::Result<tauri::menu::Menu<Wry>> {
         .item(&PredefinedMenuItem::minimize(app, Some("Minimize"))?)
         .item(&PredefinedMenuItem::maximize(app, Some("Zoom"))?)
         .separator()
-        .item(&PredefinedMenuItem::close_window(app, Some("Close Window"))?)
+        .item(&PredefinedMenuItem::close_window(
+            app,
+            Some("Close Window"),
+        )?)
         .build()?;
 
     // Help menu

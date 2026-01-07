@@ -1,7 +1,11 @@
 import MonacoEditor from "@monaco-editor/react";
 import { useAppDispatch, useAppSelector } from "../store";
 import { updateTabContent } from "../store/slices/tabsSlice";
-import { startExecution, resetExecution } from "../store/slices/executionSlice";
+import {
+  startExecution,
+  startMultiExecution,
+  clearAllExecutions,
+} from "../store/slices/executionSlice";
 import { openDownloadModal, formatCode } from "../store/slices/formatterSlice";
 import { registerSantaLang } from "../lib/santa-lang-monarch";
 import type { editor } from "monaco-editor";
@@ -12,6 +16,9 @@ export function Editor() {
   const dispatch = useAppDispatch();
   const { tabs, activeTabId } = useAppSelector((state) => state.tabs);
   const { selectedId } = useAppSelector((state) => state.reindeer);
+  const { multiSelectMode, selectedReindeerIds } = useAppSelector(
+    (state) => state.execution
+  );
   const { status: formatterStatus } = useAppSelector((state) => state.formatter);
   const editorRef = useRef<editor.IStandaloneCodeEditor | null>(null);
 
@@ -21,6 +28,8 @@ export function Editor() {
   // This prevents stale closure issues since Monaco commands are only registered once
   const activeTabRef = useRef(activeTab);
   const selectedIdRef = useRef(selectedId);
+  const multiSelectModeRef = useRef(multiSelectMode);
+  const selectedReindeerIdsRef = useRef(selectedReindeerIds);
   const formatterStatusRef = useRef<FormatterStatus | null>(formatterStatus);
 
   useEffect(() => {
@@ -30,6 +39,14 @@ export function Editor() {
   useEffect(() => {
     selectedIdRef.current = selectedId;
   }, [selectedId]);
+
+  useEffect(() => {
+    multiSelectModeRef.current = multiSelectMode;
+  }, [multiSelectMode]);
+
+  useEffect(() => {
+    selectedReindeerIdsRef.current = selectedReindeerIds;
+  }, [selectedReindeerIds]);
 
   useEffect(() => {
     formatterStatusRef.current = formatterStatus;
@@ -45,19 +62,38 @@ export function Editor() {
       // Run command (Cmd+Enter)
       editor.addCommand(monaco.KeyMod.CtrlCmd | monaco.KeyCode.Enter, () => {
         const tab = activeTabRef.current;
-        const implId = selectedIdRef.current;
-        if (tab && implId) {
-          dispatch(resetExecution());
-          dispatch(
-            startExecution({
-              implId,
-              source: editor.getValue(),
-              mode: "run",
-              workingDir: tab.path
-                ? tab.path.substring(0, tab.path.lastIndexOf("/"))
-                : undefined,
-            })
-          );
+        if (!tab) return;
+
+        dispatch(clearAllExecutions());
+
+        if (multiSelectModeRef.current) {
+          const reindeerIds = selectedReindeerIdsRef.current;
+          if (reindeerIds.length > 0) {
+            dispatch(
+              startMultiExecution({
+                reindeerIds,
+                source: editor.getValue(),
+                mode: "run",
+                workingDir: tab.path
+                  ? tab.path.substring(0, tab.path.lastIndexOf("/"))
+                  : undefined,
+              })
+            );
+          }
+        } else {
+          const implId = selectedIdRef.current;
+          if (implId) {
+            dispatch(
+              startExecution({
+                implId,
+                source: editor.getValue(),
+                mode: "run",
+                workingDir: tab.path
+                  ? tab.path.substring(0, tab.path.lastIndexOf("/"))
+                  : undefined,
+              })
+            );
+          }
         }
       });
 
@@ -66,19 +102,38 @@ export function Editor() {
         monaco.KeyMod.CtrlCmd | monaco.KeyMod.Shift | monaco.KeyCode.Enter,
         () => {
           const tab = activeTabRef.current;
-          const implId = selectedIdRef.current;
-          if (tab && implId) {
-            dispatch(resetExecution());
-            dispatch(
-              startExecution({
-                implId,
-                source: editor.getValue(),
-                mode: "test",
-                workingDir: tab.path
-                  ? tab.path.substring(0, tab.path.lastIndexOf("/"))
-                  : undefined,
-              })
-            );
+          if (!tab) return;
+
+          dispatch(clearAllExecutions());
+
+          if (multiSelectModeRef.current) {
+            const reindeerIds = selectedReindeerIdsRef.current;
+            if (reindeerIds.length > 0) {
+              dispatch(
+                startMultiExecution({
+                  reindeerIds,
+                  source: editor.getValue(),
+                  mode: "test",
+                  workingDir: tab.path
+                    ? tab.path.substring(0, tab.path.lastIndexOf("/"))
+                    : undefined,
+                })
+              );
+            }
+          } else {
+            const implId = selectedIdRef.current;
+            if (implId) {
+              dispatch(
+                startExecution({
+                  implId,
+                  source: editor.getValue(),
+                  mode: "test",
+                  workingDir: tab.path
+                    ? tab.path.substring(0, tab.path.lastIndexOf("/"))
+                    : undefined,
+                })
+              );
+            }
           }
         }
       );
