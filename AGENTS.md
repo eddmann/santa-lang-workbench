@@ -2,7 +2,7 @@
 
 ## Project Overview
 
-- **santa-lang Toy Shop**: Tauri 2.0 desktop IDE for santa-lang (functional language for Advent of Code)
+- **santa-lang Workbench**: Tauri 2.0 desktop IDE for santa-lang (functional language for Advent of Code)
 - Frontend: React 19 + Redux Toolkit + Monaco Editor + TailwindCSS v4
 - Backend: Rust (Tauri) with process spawning for language implementations
 - "Reindeer" = language implementation binaries (Comet, Blitzen, Dasher, Donner, Prancer)
@@ -78,7 +78,7 @@ cd src-tauri && cargo fmt --check
 
 - Commands in `src-tauri/src/commands/` - exported via `mod.rs`
 - AppState wrapped in `Mutex<AppState>` for thread-safe access
-- Config persistence: `{config_dir}/com.eddmann.santa-lang-toy-shop/config.json`
+- Config persistence: `{config_dir}/com.eddmann.santa-lang-workbench/config.json`
   - Linux: `~/.config/...`
   - macOS: `~/Library/Application Support/...`
   - Windows: `%APPDATA%/...`

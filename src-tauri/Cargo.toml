@@ -1,12 +1,12 @@
 [package]
-name = "santa-lang-toy-shop"
+name = "santa-lang-workbench"
 version = "0.1.0"
 description = "A cross-platform editor for santa-lang"
 authors = ["Edd Mann"]
 edition = "2024"
 
 [lib]
-name = "santa_lang_toy_shop_lib"
+name = "santa_lang_workbench_lib"
 crate-type = ["staticlib", "cdylib", "rlib"]
 
 [build-dependencies]

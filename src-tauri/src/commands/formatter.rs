@@ -115,7 +115,7 @@ pub async fn fetch_formatter_releases() -> Result<Vec<Release>, String> {
     let client = reqwest::Client::new();
     let response = client
         .get(&url)
-        .header("User-Agent", "santa-lang-toy-shop")
+        .header("User-Agent", "santa-lang-workbench")
         .header("Accept", "application/vnd.github.v3+json")
         .send()
         .await
@@ -146,7 +146,7 @@ pub async fn download_formatter(
     // Determine download directory
     let download_dir = dirs::data_local_dir()
         .ok_or("Could not find local data directory")?
-        .join("santa-lang-toy-shop")
+        .join("santa-lang-workbench")
         .join("formatter");
 
     std::fs::create_dir_all(&download_dir).map_err(|e| e.to_string())?;
@@ -157,7 +157,7 @@ pub async fn download_formatter(
     let client = reqwest::Client::new();
     let response = client
         .get(&asset_url)
-        .header("User-Agent", "santa-lang-toy-shop")
+        .header("User-Agent", "santa-lang-workbench")
         .header("Accept", "application/octet-stream")
         .send()
         .await

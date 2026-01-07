@@ -2,5 +2,5 @@
 #![cfg_attr(not(debug_assertions), windows_subsystem = "windows")]
 
 fn main() {
-    santa_lang_toy_shop_lib::run()
+    santa_lang_workbench_lib::run()
 }

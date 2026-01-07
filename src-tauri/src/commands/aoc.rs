@@ -66,7 +66,7 @@ pub async fn fetch_aoc_puzzle(
     let puzzle_url = format!("https://adventofcode.com/{}/day/{}", year, day);
     let puzzle_response = client
         .get(&puzzle_url)
-        .header("User-Agent", "santa-lang-toy-shop/1.0")
+        .header("User-Agent", "santa-lang-workbench/1.0")
         .send()
         .await
         .map_err(|e| format!("Failed to fetch puzzle page: {}", e))?;
@@ -93,7 +93,7 @@ pub async fn fetch_aoc_puzzle(
             let input_url = format!("https://adventofcode.com/{}/day/{}/input", year, day);
             let input_response = client
                 .get(&input_url)
-                .header("User-Agent", "santa-lang-toy-shop/1.0")
+                .header("User-Agent", "santa-lang-workbench/1.0")
                 .header("Cookie", format!("session={}", token))
                 .send()
                 .await

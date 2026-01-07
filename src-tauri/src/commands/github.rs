@@ -49,7 +49,7 @@ pub async fn get_github_releases(codename: String) -> Result<Vec<Release>, Strin
     let client = reqwest::Client::new();
     let response = client
         .get(&url)
-        .header("User-Agent", "santa-lang-toy-shop")
+        .header("User-Agent", "santa-lang-workbench")
         .header("Accept", "application/vnd.github.v3+json")
         .send()
         .await
@@ -79,7 +79,7 @@ pub async fn download_reindeer(
     // Determine download directory
     let download_dir = dirs::data_local_dir()
         .ok_or("Could not find local data directory")?
-        .join("santa-lang-toy-shop")
+        .join("santa-lang-workbench")
         .join("reindeer")
         .join(&codename);
 
@@ -89,7 +89,7 @@ pub async fn download_reindeer(
     let client = reqwest::Client::new();
     let response = client
         .get(&asset_url)
-        .header("User-Agent", "santa-lang-toy-shop")
+        .header("User-Agent", "santa-lang-workbench")
         .header("Accept", "application/octet-stream")
         .send()
         .await

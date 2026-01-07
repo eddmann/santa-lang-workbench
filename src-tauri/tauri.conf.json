@@ -1,8 +1,8 @@
 {
   "$schema": "https://schema.tauri.app/config/2",
-  "productName": "santa-lang Toy Shop",
+  "productName": "santa-lang Workbench",
   "version": "0.1.0",
-  "identifier": "com.eddmann.santa-lang-toy-shop",
+  "identifier": "com.eddmann.santa-lang-workbench",
   "build": {
     "beforeDevCommand": "bun run dev",
     "devUrl": "http://localhost:5173",
@@ -13,7 +13,7 @@
     "withGlobalTauri": true,
     "windows": [
       {
-        "title": "santa-lang Toy Shop",
+        "title": "santa-lang Workbench",
         "width": 1200,
         "height": 800,
         "resizable": true,
