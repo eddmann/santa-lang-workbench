@@ -3,7 +3,7 @@ import { useAppDispatch, useAppSelector } from "../store";
 import {
   setActiveExecution,
   removeExecution,
-  clearAllExecutions,
+  clearExecutionsForTab,
 } from "../store/slices/executionSlice";
 import { OutputPanel } from "./OutputPanel";
 import {
@@ -19,22 +19,25 @@ import type { ExecutionInstance } from "../lib/types";
 
 type ViewMode = "tabs" | "grid" | "chart";
 
-export function MultiOutputPanel() {
+interface MultiOutputPanelProps {
+  executionsForTab: ExecutionInstance[];
+  tabId: string | null;
+}
+
+export function MultiOutputPanel({ executionsForTab, tabId }: MultiOutputPanelProps) {
   const dispatch = useAppDispatch();
-  const { executions, activeExecutionId, multiSelectMode } = useAppSelector(
+  const { activeExecutionId, multiSelectMode } = useAppSelector(
     (state) => state.execution
   );
   const [viewMode, setViewMode] = useState<ViewMode>("grid");
 
-  // Get executions sorted by startedAt
+  // Sort executions by startedAt
   const sortedExecutions = useMemo(() => {
-    return Object.values(executions)
-      .filter((e) => !e.id.startsWith("pending_"))
-      .sort((a, b) => a.startedAt - b.startedAt);
-  }, [executions]);
+    return [...executionsForTab].sort((a, b) => a.startedAt - b.startedAt);
+  }, [executionsForTab]);
 
   const activeExecution = activeExecutionId
-    ? executions[activeExecutionId]
+    ? sortedExecutions.find(e => e.id === activeExecutionId)
     : sortedExecutions[0] || null;
 
   const handleSelectExecution = (id: string) => {
@@ -46,7 +49,9 @@ export function MultiOutputPanel() {
   };
 
   const handleClearAll = () => {
-    dispatch(clearAllExecutions());
+    if (tabId) {
+      dispatch(clearExecutionsForTab(tabId));
+    }
   };
 
   // Empty state

@@ -112,6 +112,7 @@ export interface TabFile {
 
 export interface ExecutionInstance {
   id: string;
+  tabId: string;
   reindeer: Reindeer;
   status: ExecutionStatus;
   mode: ExecutionMode | null;

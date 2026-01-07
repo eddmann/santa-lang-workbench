@@ -4,7 +4,7 @@ import {
   startExecution,
   startMultiExecution,
   cancelAllExecutions,
-  clearAllExecutions,
+  clearExecutionsForTab,
   setMultiSelectMode,
 } from "../store/slices/executionSlice";
 import { selectReindeer } from "../store/slices/reindeerSlice";
@@ -87,7 +87,7 @@ export function Toolbar() {
         });
         return;
       }
-      dispatch(clearAllExecutions());
+      dispatch(clearExecutionsForTab(activeTab.id));
       dispatch(
         startMultiExecution({
           reindeerIds: selectedReindeerIds,
@@ -96,11 +96,12 @@ export function Toolbar() {
           workingDir: activeTab.path
             ? activeTab.path.substring(0, activeTab.path.lastIndexOf("/"))
             : undefined,
+          tabId: activeTab.id,
         })
       );
     } else {
       if (!selectedId) return;
-      dispatch(clearAllExecutions());
+      dispatch(clearExecutionsForTab(activeTab.id));
       dispatch(
         startExecution({
           implId: selectedId,
@@ -109,6 +110,7 @@ export function Toolbar() {
           workingDir: activeTab.path
             ? activeTab.path.substring(0, activeTab.path.lastIndexOf("/"))
             : undefined,
+          tabId: activeTab.id,
         })
       );
     }
@@ -124,7 +126,7 @@ export function Toolbar() {
         });
         return;
       }
-      dispatch(clearAllExecutions());
+      dispatch(clearExecutionsForTab(activeTab.id));
       dispatch(
         startMultiExecution({
           reindeerIds: selectedReindeerIds,
@@ -133,11 +135,12 @@ export function Toolbar() {
           workingDir: activeTab.path
             ? activeTab.path.substring(0, activeTab.path.lastIndexOf("/"))
             : undefined,
+          tabId: activeTab.id,
         })
       );
     } else {
       if (!selectedId) return;
-      dispatch(clearAllExecutions());
+      dispatch(clearExecutionsForTab(activeTab.id));
       dispatch(
         startExecution({
           implId: selectedId,
@@ -146,6 +149,7 @@ export function Toolbar() {
           workingDir: activeTab.path
             ? activeTab.path.substring(0, activeTab.path.lastIndexOf("/"))
             : undefined,
+          tabId: activeTab.id,
         })
       );
     }

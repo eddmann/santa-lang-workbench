@@ -4,7 +4,7 @@ import { updateTabContent } from "../store/slices/tabsSlice";
 import {
   startExecution,
   startMultiExecution,
-  clearAllExecutions,
+  clearExecutionsForTab,
 } from "../store/slices/executionSlice";
 import { openDownloadModal, formatCode } from "../store/slices/formatterSlice";
 import { registerSantaLang } from "../lib/santa-lang-monarch";
@@ -64,7 +64,7 @@ export function Editor() {
         const tab = activeTabRef.current;
         if (!tab) return;
 
-        dispatch(clearAllExecutions());
+        dispatch(clearExecutionsForTab(tab.id));
 
         if (multiSelectModeRef.current) {
           const reindeerIds = selectedReindeerIdsRef.current;
@@ -77,6 +77,7 @@ export function Editor() {
                 workingDir: tab.path
                   ? tab.path.substring(0, tab.path.lastIndexOf("/"))
                   : undefined,
+                tabId: tab.id,
               })
             );
           }
@@ -91,6 +92,7 @@ export function Editor() {
                 workingDir: tab.path
                   ? tab.path.substring(0, tab.path.lastIndexOf("/"))
                   : undefined,
+                tabId: tab.id,
               })
             );
           }
@@ -104,7 +106,7 @@ export function Editor() {
           const tab = activeTabRef.current;
           if (!tab) return;
 
-          dispatch(clearAllExecutions());
+          dispatch(clearExecutionsForTab(tab.id));
 
           if (multiSelectModeRef.current) {
             const reindeerIds = selectedReindeerIdsRef.current;
@@ -117,6 +119,7 @@ export function Editor() {
                   workingDir: tab.path
                     ? tab.path.substring(0, tab.path.lastIndexOf("/"))
                     : undefined,
+                  tabId: tab.id,
                 })
               );
             }
@@ -131,6 +134,7 @@ export function Editor() {
                   workingDir: tab.path
                     ? tab.path.substring(0, tab.path.lastIndexOf("/"))
                     : undefined,
+                  tabId: tab.id,
                 })
               );
             }

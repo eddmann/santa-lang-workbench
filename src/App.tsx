@@ -20,14 +20,18 @@ import { useAocDetection } from "./hooks/useAocDetection";
 function AppContent() {
   const dispatch = useAppDispatch();
   const { settings } = useAppSelector((state) => state.settings);
+  const { tabs, activeTabId } = useAppSelector((state) => state.tabs);
   const { executions, multiSelectMode } = useAppSelector((state) => state.execution);
 
-  // Determine if we should show multi-output mode
-  const executionCount = useMemo(() => {
-    return Object.values(executions).filter((e) => !e.id.startsWith("pending_")).length;
-  }, [executions]);
+  // Filter executions for the active tab
+  const executionsForTab = useMemo(() => {
+    return Object.values(executions).filter(
+      (e) => e.tabId === activeTabId && !e.id.startsWith("pending_")
+    );
+  }, [executions, activeTabId]);
 
-  const showMultiOutput = multiSelectMode || executionCount > 1;
+  // Determine if we should show multi-output mode (for this tab)
+  const showMultiOutput = multiSelectMode || executionsForTab.length > 1;
 
   useEffect(() => {
     dispatch(loadReindeer());
@@ -47,32 +51,48 @@ function AppContent() {
   // Detect AoC references in source code
   useAocDetection();
 
-  // Get the first execution for single-output mode
+  // Get the first execution for single-output mode (from this tab's executions)
   const singleExecution = useMemo(() => {
-    const execs = Object.values(executions).filter((e) => !e.id.startsWith("pending_"));
-    return execs.length > 0 ? execs[0] : null;
-  }, [executions]);
+    return executionsForTab.length > 0 ? executionsForTab[0] : null;
+  }, [executionsForTab]);
+
+  const hasTabs = tabs.length > 0;
 
   return (
     <div className="h-screen flex flex-col bg-[var(--color-background)]">
       <Toolbar />
       <EditorTabs />
-      <Group orientation="horizontal" style={{ flex: 1, minHeight: 0 }}>
-        {/* Editor Panel */}
-        <Panel minSize="200px">
-          <div className="h-full min-w-0">
-            <Editor />
+      {hasTabs ? (
+        <Group orientation="horizontal" style={{ flex: 1, minHeight: 0 }}>
+          {/* Editor Panel */}
+          <Panel minSize="200px">
+            <div className="h-full min-w-0">
+              <Editor />
+            </div>
+          </Panel>
+          <Separator className="resize-handle" />
+          {/* Output Panel */}
+          <Panel defaultSize="400px" minSize="300px" maxSize="900px">
+            <SplitOutputPanel
+              singleExecution={singleExecution}
+              showMultiOutput={showMultiOutput}
+              executionsForTab={executionsForTab}
+              tabId={activeTabId}
+            />
+          </Panel>
+        </Group>
+      ) : (
+        <div className="flex-1 flex items-center justify-center bg-[var(--color-background)]">
+          <div className="text-center">
+            <p className="text-[var(--color-text-muted)] text-sm">
+              No files open
+            </p>
+            <p className="text-[var(--color-text-muted)] text-xs mt-1">
+              Click + to create a new file or use Open to load one
+            </p>
           </div>
-        </Panel>
-        <Separator className="resize-handle" />
-        {/* Output Panel */}
-        <Panel defaultSize="400px" minSize="300px" maxSize="900px">
-          <SplitOutputPanel
-            singleExecution={singleExecution}
-            showMultiOutput={showMultiOutput}
-          />
-        </Panel>
-      </Group>
+        </div>
+      )}
       <StatusBar />
       <SettingsModal />
       <FormatterDownloadModal />

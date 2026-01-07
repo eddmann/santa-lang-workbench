@@ -12,6 +12,8 @@ import type { ExecutionInstance } from "../lib/types";
 interface SplitOutputPanelProps {
   singleExecution: ExecutionInstance | null;
   showMultiOutput: boolean;
+  executionsForTab: ExecutionInstance[];
+  tabId: string | null;
 }
 
 type ActiveTab = "output" | "puzzle";
@@ -19,6 +21,8 @@ type ActiveTab = "output" | "puzzle";
 export function SplitOutputPanel({
   singleExecution,
   showMultiOutput,
+  executionsForTab,
+  tabId,
 }: SplitOutputPanelProps) {
   const { currentReference } = useAppSelector((state) => state.aoc);
   const [activeTab, setActiveTab] = useState<ActiveTab>("output");
@@ -28,7 +32,7 @@ export function SplitOutputPanel({
     return (
       <div className="h-full bg-[var(--color-background)]">
         {showMultiOutput ? (
-          <MultiOutputPanel />
+          <MultiOutputPanel executionsForTab={executionsForTab} tabId={tabId} />
         ) : (
           <OutputPanel execution={singleExecution} />
         )}
@@ -71,7 +75,7 @@ export function SplitOutputPanel({
       <div className="flex-1 overflow-hidden">
         {activeTab === "output" ? (
           showMultiOutput ? (
-            <MultiOutputPanel />
+            <MultiOutputPanel executionsForTab={executionsForTab} tabId={tabId} />
           ) : (
             <OutputPanel execution={singleExecution} showHeader={false} />
           )

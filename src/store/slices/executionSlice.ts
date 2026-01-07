@@ -11,6 +11,7 @@ import type {
   Reindeer,
 } from "../../lib/types";
 import type { AppDispatch, RootState } from "..";
+import { closeTab } from "./tabsSlice";
 
 interface ExecutionSliceState {
   executions: Record<string, ExecutionInstance>;
@@ -58,11 +59,11 @@ const setupGlobalListener = async (dispatch: AppDispatch) => {
 
 export const startExecution = createAsyncThunk<
   void,
-  { implId: string; source: string; mode: ExecutionMode; workingDir?: string },
+  { implId: string; source: string; mode: ExecutionMode; workingDir?: string; tabId: string },
   { dispatch: AppDispatch; state: RootState }
 >(
   "execution/start",
-  async ({ implId, source, mode, workingDir }, { dispatch, getState }) => {
+  async ({ implId, source, mode, workingDir, tabId }, { dispatch, getState }) => {
     // Get the reindeer object
     const state = getState();
     const reindeer = state.reindeer.reindeer.find(r => r.id === implId);
@@ -82,6 +83,7 @@ export const startExecution = createAsyncThunk<
       executionId,
       reindeer,
       mode,
+      tabId,
     }));
 
     // Start the execution - events will be handled by the listener
@@ -97,14 +99,14 @@ export const startExecution = createAsyncThunk<
 
 export const startMultiExecution = createAsyncThunk<
   void,
-  { reindeerIds: string[]; source: string; mode: ExecutionMode; workingDir?: string },
+  { reindeerIds: string[]; source: string; mode: ExecutionMode; workingDir?: string; tabId: string },
   { dispatch: AppDispatch }
 >(
   "execution/startMulti",
-  async ({ reindeerIds, source, mode, workingDir }, { dispatch }) => {
+  async ({ reindeerIds, source, mode, workingDir, tabId }, { dispatch }) => {
     // Dispatch startExecution for each reindeer in parallel
     const promises = reindeerIds.map(implId =>
-      dispatch(startExecution({ implId, source, mode, workingDir }))
+      dispatch(startExecution({ implId, source, mode, workingDir, tabId }))
     );
     await Promise.all(promises);
   }
@@ -175,11 +177,25 @@ export const executionSlice = createSlice({
       state.executions = {};
       state.activeExecutionId = null;
     },
+    clearExecutionsForTab: (state, action: PayloadAction<string>) => {
+      const tabId = action.payload;
+      // Remove all executions for this tab
+      for (const execId of Object.keys(state.executions)) {
+        if (state.executions[execId].tabId === tabId) {
+          delete state.executions[execId];
+        }
+      }
+      // Reset active execution if it was for this tab
+      if (state.activeExecutionId && state.executions[state.activeExecutionId]?.tabId === tabId) {
+        state.activeExecutionId = null;
+      }
+    },
     // Create execution entry - called before invoke to ensure it exists when events arrive
-    createExecution: (state, action: PayloadAction<{ executionId: string; reindeer: Reindeer; mode: ExecutionMode }>) => {
-      const { executionId, reindeer, mode } = action.payload;
+    createExecution: (state, action: PayloadAction<{ executionId: string; reindeer: Reindeer; mode: ExecutionMode; tabId: string }>) => {
+      const { executionId, reindeer, mode, tabId } = action.payload;
       state.executions[executionId] = {
         id: executionId,
+        tabId,
         reindeer,
         status: "running",
         mode,
@@ -268,6 +284,20 @@ export const executionSlice = createSlice({
         if (execution) {
           execution.status = "idle";
         }
+      })
+      // Clean up executions when a tab is closed
+      .addCase(closeTab, (state, action) => {
+        const tabId = action.payload;
+        for (const execId of Object.keys(state.executions)) {
+          if (state.executions[execId].tabId === tabId) {
+            delete state.executions[execId];
+          }
+        }
+        // Reset active execution if it was for this tab
+        if (state.activeExecutionId && !state.executions[state.activeExecutionId]) {
+          const executionIds = Object.keys(state.executions);
+          state.activeExecutionId = executionIds.length > 0 ? executionIds[0] : null;
+        }
       });
   },
 });
@@ -279,6 +309,7 @@ export const {
   setActiveExecution,
   removeExecution,
   clearAllExecutions,
+  clearExecutionsForTab,
   createExecution,
   setInitialResult,
   applyResultPatch,

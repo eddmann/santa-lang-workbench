@@ -10,7 +10,7 @@ import {
   startExecution,
   startMultiExecution,
   cancelAllExecutions,
-  clearAllExecutions,
+  clearExecutionsForTab,
 } from "../store/slices/executionSlice";
 import { openSettingsModal } from "../store/slices/settingsSlice";
 import {
@@ -118,7 +118,7 @@ export function useMenuEvents() {
               });
               break;
             }
-            dispatch(clearAllExecutions());
+            dispatch(clearExecutionsForTab(activeTab.id));
             dispatch(
               startMultiExecution({
                 reindeerIds: selectedReindeerIds,
@@ -127,10 +127,11 @@ export function useMenuEvents() {
                 workingDir: activeTab.path
                   ? activeTab.path.substring(0, activeTab.path.lastIndexOf("/"))
                   : undefined,
+                tabId: activeTab.id,
               })
             );
           } else if (selectedId) {
-            dispatch(clearAllExecutions());
+            dispatch(clearExecutionsForTab(activeTab.id));
             dispatch(
               startExecution({
                 implId: selectedId,
@@ -139,6 +140,7 @@ export function useMenuEvents() {
                 workingDir: activeTab.path
                   ? activeTab.path.substring(0, activeTab.path.lastIndexOf("/"))
                   : undefined,
+                tabId: activeTab.id,
               })
             );
           }
@@ -154,7 +156,7 @@ export function useMenuEvents() {
               });
               break;
             }
-            dispatch(clearAllExecutions());
+            dispatch(clearExecutionsForTab(activeTab.id));
             dispatch(
               startMultiExecution({
                 reindeerIds: selectedReindeerIds,
@@ -163,10 +165,11 @@ export function useMenuEvents() {
                 workingDir: activeTab.path
                   ? activeTab.path.substring(0, activeTab.path.lastIndexOf("/"))
                   : undefined,
+                tabId: activeTab.id,
               })
             );
           } else if (selectedId) {
-            dispatch(clearAllExecutions());
+            dispatch(clearExecutionsForTab(activeTab.id));
             dispatch(
               startExecution({
                 implId: selectedId,
@@ -175,6 +178,7 @@ export function useMenuEvents() {
                 workingDir: activeTab.path
                   ? activeTab.path.substring(0, activeTab.path.lastIndexOf("/"))
                   : undefined,
+                tabId: activeTab.id,
               })
             );
           }
