@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useRef } from "react";
 import {
   CommandLineIcon,
   BookOpenIcon,
@@ -26,6 +26,20 @@ export function SplitOutputPanel({
 }: SplitOutputPanelProps) {
   const { currentReference } = useAppSelector((state) => state.aoc);
   const [activeTab, setActiveTab] = useState<ActiveTab>("output");
+
+  // Track the reference key to detect changes and reset tab selection
+  const referenceKey = currentReference
+    ? `${currentReference.year}/${currentReference.day}`
+    : null;
+  const prevReferenceKeyRef = useRef(referenceKey);
+
+  // Reset to output tab when the AoC reference changes (including to/from null)
+  if (prevReferenceKeyRef.current !== referenceKey) {
+    prevReferenceKeyRef.current = referenceKey;
+    if (activeTab !== "output") {
+      setActiveTab("output");
+    }
+  }
 
   // If no AoC reference, just show output directly
   if (!currentReference) {
