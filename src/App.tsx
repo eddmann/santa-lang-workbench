@@ -11,7 +11,6 @@ import { EditorTabs } from "./components/EditorTabs";
 import { Editor } from "./components/Editor";
 import { SplitOutputPanel } from "./components/SplitOutputPanel";
 import { SettingsModal } from "./components/SettingsModal";
-import { FormatterDownloadModal } from "./components/FormatterDownloadModal";
 import { StatusBar } from "./components/StatusBar";
 import { getTheme, applyTheme } from "./lib/themes";
 import { useMenuEvents } from "./hooks/useMenuEvents";
@@ -95,7 +94,6 @@ function AppContent() {
       )}
       <StatusBar />
       <SettingsModal />
-      <FormatterDownloadModal />
       <Toaster
         theme="dark"
         position="bottom-right"

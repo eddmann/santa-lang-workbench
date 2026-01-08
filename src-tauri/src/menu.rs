@@ -85,7 +85,7 @@ pub fn create_menu(app: &AppHandle) -> tauri::Result<tauri::menu::Menu<Wry>> {
 
     // Help menu
     let help_menu = SubmenuBuilder::new(app, "Help")
-        .item(&MenuItemBuilder::with_id("docs", "Santa Lang Documentation").build(app)?)
+        .item(&MenuItemBuilder::with_id("docs", "Documentation").build(app)?)
         .build()?;
 
     MenuBuilder::new(app)

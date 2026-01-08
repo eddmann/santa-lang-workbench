@@ -10,10 +10,7 @@ import {
 import { selectReindeer } from "../store/slices/reindeerSlice";
 import { openSettingsModal } from "../store/slices/settingsSlice";
 import { addTab, saveTab, updateTabContent } from "../store/slices/tabsSlice";
-import {
-  openDownloadModal,
-  formatCode,
-} from "../store/slices/formatterSlice";
+import { formatCode } from "../store/slices/formatterSlice";
 import { open, save } from "@tauri-apps/plugin-dialog";
 import { readTextFile, writeTextFile } from "@tauri-apps/plugin-fs";
 import {
@@ -176,7 +173,11 @@ export function Toolbar() {
     if (!activeTab) return;
 
     if (!formatterStatus?.installed) {
-      dispatch(openDownloadModal());
+      // Open settings modal to the formatting tab
+      dispatch(openSettingsModal());
+      toast.info("Formatter not installed", {
+        description: "Download Tinsel in the Formatting tab to enable formatting.",
+      });
       return;
     }
 

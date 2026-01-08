@@ -13,10 +13,7 @@ import {
   clearExecutionsForTab,
 } from "../store/slices/executionSlice";
 import { openSettingsModal } from "../store/slices/settingsSlice";
-import {
-  openDownloadModal,
-  formatCode,
-} from "../store/slices/formatterSlice";
+import { formatCode } from "../store/slices/formatterSlice";
 
 export function useMenuEvents() {
   const dispatch = useAppDispatch();
@@ -195,13 +192,16 @@ export function useMenuEvents() {
           break;
 
         case "docs":
-          openUrl("https://github.com/eddmann/santa-lang");
+          openUrl("https://eddmann.com/santa-lang/");
           break;
 
         case "format": {
           if (!activeTab) break;
           if (!formatterStatus?.installed) {
-            dispatch(openDownloadModal());
+            dispatch(openSettingsModal());
+            toast.info("Formatter not installed", {
+              description: "Download Tinsel in the Formatting tab to enable formatting.",
+            });
           } else {
             const result = await dispatch(formatCode(activeTab.content)).unwrap();
             if (result.success && result.formatted) {

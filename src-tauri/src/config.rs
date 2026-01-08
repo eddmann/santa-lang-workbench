@@ -1,4 +1,4 @@
-pub const FORMATTER_REPO: &str = "eddmann/santa-lang-comet";
+pub const FORMATTER_REPO: &str = "eddmann/santa-lang-tinsel";
 
 pub const IMPLEMENTATIONS: &[(&str, &str, &str)] = &[
     ("comet", "Comet", "eddmann/santa-lang-comet"),

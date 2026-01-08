@@ -13,7 +13,7 @@ interface FormatterState {
   isLoading: boolean;
   isFormatting: boolean;
   isDownloading: boolean;
-  showDownloadModal: boolean;
+  isCheckingUpdate: boolean;
   releases: Release[];
   releasesLoading: boolean;
   error: FormatError | null;
@@ -24,7 +24,7 @@ const initialState: FormatterState = {
   isLoading: false,
   isFormatting: false,
   isDownloading: false,
-  showDownloadModal: false,
+  isCheckingUpdate: false,
   releases: [],
   releasesLoading: false,
   error: null,
@@ -34,6 +34,14 @@ export const checkFormatterStatus = createAsyncThunk(
   "formatter/checkStatus",
   async () => {
     const status = await invoke<FormatterStatus>("get_formatter_status");
+    return status;
+  }
+);
+
+export const checkFormatterUpdate = createAsyncThunk(
+  "formatter/checkUpdate",
+  async () => {
+    const status = await invoke<FormatterStatus>("check_formatter_update");
     return status;
   }
 );
@@ -77,12 +85,6 @@ export const formatterSlice = createSlice({
   name: "formatter",
   initialState,
   reducers: {
-    openDownloadModal: (state) => {
-      state.showDownloadModal = true;
-    },
-    closeDownloadModal: (state) => {
-      state.showDownloadModal = false;
-    },
     clearError: (state) => {
       state.error = null;
     },
@@ -102,7 +104,24 @@ export const formatterSlice = createSlice({
       })
       .addCase(checkFormatterStatus.rejected, (state) => {
         state.isLoading = false;
-        state.status = { installed: false, path: null, version: null };
+        state.status = {
+          installed: false,
+          path: null,
+          version: null,
+          latest_version: null,
+          has_update: false,
+        };
+      })
+      // Check update
+      .addCase(checkFormatterUpdate.pending, (state) => {
+        state.isCheckingUpdate = true;
+      })
+      .addCase(checkFormatterUpdate.fulfilled, (state, action) => {
+        state.isCheckingUpdate = false;
+        state.status = action.payload;
+      })
+      .addCase(checkFormatterUpdate.rejected, (state) => {
+        state.isCheckingUpdate = false;
       })
       // Fetch releases
       .addCase(fetchFormatterReleases.pending, (state) => {
@@ -122,7 +141,6 @@ export const formatterSlice = createSlice({
       .addCase(downloadFormatter.fulfilled, (state, action) => {
         state.isDownloading = false;
         state.status = action.payload.status;
-        state.showDownloadModal = false;
       })
       .addCase(downloadFormatter.rejected, (state) => {
         state.isDownloading = false;
@@ -148,8 +166,6 @@ export const formatterSlice = createSlice({
 });
 
 export const {
-  openDownloadModal,
-  closeDownloadModal,
   clearError,
   setFormatError,
 } = formatterSlice.actions;

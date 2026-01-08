@@ -42,6 +42,7 @@ pub fn run() {
             commands::formatter::fetch_formatter_releases,
             commands::formatter::download_formatter,
             commands::formatter::format_code,
+            commands::formatter::check_formatter_update,
             commands::aoc::fetch_aoc_puzzle,
         ])
         .run(tauri::generate_context!())

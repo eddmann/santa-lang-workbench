@@ -8,6 +8,11 @@ import {
   fetchReleases,
   downloadReindeer,
 } from "../store/slices/reindeerSlice";
+import {
+  checkFormatterUpdate,
+  fetchFormatterReleases,
+  downloadFormatter,
+} from "../store/slices/formatterSlice";
 import { open } from "@tauri-apps/plugin-dialog";
 import {
   XMarkIcon,
@@ -22,16 +27,20 @@ import {
   SwatchIcon,
   ChevronRightIcon,
   BugAntIcon,
+  CodeBracketIcon,
+  ArrowPathIcon,
+  ArrowTopRightOnSquareIcon,
 } from "@heroicons/react/20/solid";
+import { open as openUrl } from "@tauri-apps/plugin-shell";
 import type { Settings, Release } from "../lib/types";
 import { themes, applyTheme, getTheme } from "../lib/themes";
 
 const CODENAMES = [
-  { id: "comet", name: "Comet", desc: "Rust tree-walking interpreter", color: "text-orange-400" },
-  { id: "blitzen", name: "Blitzen", desc: "Rust bytecode VM", color: "text-blue-400" },
-  { id: "dasher", name: "Dasher", desc: "Rust LLVM compiler", color: "text-red-400" },
-  { id: "donner", name: "Donner", desc: "Kotlin JVM compiler", color: "text-purple-400" },
-  { id: "prancer", name: "Prancer", desc: "TypeScript interpreter", color: "text-yellow-400" },
+  { id: "comet", name: "Comet", desc: "Tree-walking interpreter written in Rust", color: "text-orange-400", url: "https://eddmann.com/santa-lang/reindeer/comet/" },
+  { id: "blitzen", name: "Blitzen", desc: "Bytecode virtual machine written in Rust", color: "text-blue-400", url: "https://eddmann.com/santa-lang/reindeer/blitzen/" },
+  { id: "dasher", name: "Dasher", desc: "LLVM-based AOT native compiler written in Rust", color: "text-red-400", url: "https://eddmann.com/santa-lang/reindeer/dasher/" },
+  { id: "donner", name: "Donner", desc: "JVM bytecode compiler written in Kotlin", color: "text-purple-400", url: "https://eddmann.com/santa-lang/reindeer/donner/" },
+  { id: "prancer", name: "Prancer", desc: "Tree-walking interpreter written in TypeScript", color: "text-yellow-400", url: "https://eddmann.com/santa-lang/reindeer/prancer/" },
 ];
 
 export function SettingsModal() {
@@ -40,10 +49,17 @@ export function SettingsModal() {
   const { reindeer, releases, releasesLoading } = useAppSelector(
     (state) => state.reindeer
   );
+  const {
+    status: formatterStatus,
+    releases: formatterReleases,
+    releasesLoading: formatterReleasesLoading,
+    isDownloading: formatterDownloading,
+    isCheckingUpdate,
+  } = useAppSelector((state) => state.formatter);
 
   const [localSettings, setLocalSettings] = useState<Settings>(settings);
-  const [activeTab, setActiveTab] = useState<"reindeer" | "general">(
-    "reindeer"
+  const [activeTab, setActiveTab] = useState<"general" | "reindeer" | "formatting">(
+    "general"
   );
   const [selectedCodename, setSelectedCodename] = useState<string | null>(null);
   const [downloadingRelease, setDownloadingRelease] = useState<string | null>(null);
@@ -83,6 +99,16 @@ export function SettingsModal() {
   useEffect(() => {
     dispatch(loadReindeer());
   }, [dispatch]);
+
+  // Check for formatter updates when the formatting tab is opened
+  useEffect(() => {
+    if (isModalOpen && activeTab === "formatting") {
+      dispatch(checkFormatterUpdate());
+      if (formatterReleases.length === 0) {
+        dispatch(fetchFormatterReleases());
+      }
+    }
+  }, [isModalOpen, activeTab, dispatch, formatterReleases.length]);
 
   if (!isModalOpen) return null;
 
@@ -176,6 +202,44 @@ export function SettingsModal() {
     );
   };
 
+  // Get platform asset for Tinsel formatter (different naming pattern)
+  const getFormatterPlatformAsset = (release: Release) => {
+    const platform = navigator.platform.toLowerCase();
+    const arch = navigator.userAgent.includes("arm64") ? "arm64" : "amd64";
+
+    let os = "linux";
+    if (platform.includes("mac")) os = "macos";
+    else if (platform.includes("win")) os = "windows";
+
+    // Tinsel binary naming: santa-tinsel-{version}-{os}-{arch}
+    return release.assets.find(
+      (a) =>
+        a.name.includes("santa-tinsel") &&
+        a.name.includes(os) &&
+        a.name.includes(arch) &&
+        !a.name.endsWith(".sha256") &&
+        !a.name.endsWith(".wasm")
+    );
+  };
+
+  const handleDownloadFormatter = async (release: Release) => {
+    const asset = getFormatterPlatformAsset(release);
+    if (!asset) return;
+
+    try {
+      await dispatch(
+        downloadFormatter({
+          assetUrl: asset.browser_download_url,
+          assetName: asset.name,
+        })
+      ).unwrap();
+      // Refresh status after download
+      dispatch(checkFormatterUpdate());
+    } catch (e) {
+      console.error("Failed to download formatter:", e);
+    }
+  };
+
   return (
     <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 animate-fade-in">
       <div className="bg-[var(--color-surface)] rounded-xl border border-[var(--color-border)]
@@ -202,6 +266,17 @@ export function SettingsModal() {
         {/* Tabs */}
         <div className="flex border-b border-[var(--color-border-subtle)]">
           <button
+            onClick={() => setActiveTab("general")}
+            className={`flex items-center gap-2 px-6 py-3 text-sm font-medium transition-colors duration-150 ${
+              activeTab === "general"
+                ? "text-[var(--color-accent)] border-b-2 border-[var(--color-accent)]"
+                : "text-[var(--color-text-secondary)] hover:text-[var(--color-text-primary)]"
+            }`}
+          >
+            <Cog6ToothIcon className="w-4 h-4" />
+            General
+          </button>
+          <button
             onClick={() => setActiveTab("reindeer")}
             className={`flex items-center gap-2 px-6 py-3 text-sm font-medium transition-colors duration-150 ${
               activeTab === "reindeer"
@@ -213,15 +288,15 @@ export function SettingsModal() {
             Reindeer
           </button>
           <button
-            onClick={() => setActiveTab("general")}
+            onClick={() => setActiveTab("formatting")}
             className={`flex items-center gap-2 px-6 py-3 text-sm font-medium transition-colors duration-150 ${
-              activeTab === "general"
+              activeTab === "formatting"
                 ? "text-[var(--color-accent)] border-b-2 border-[var(--color-accent)]"
                 : "text-[var(--color-text-secondary)] hover:text-[var(--color-text-primary)]"
             }`}
           >
-            <KeyIcon className="w-4 h-4" />
-            General
+            <CodeBracketIcon className="w-4 h-4" />
+            Formatting
           </button>
         </div>
 
@@ -367,29 +442,45 @@ export function SettingsModal() {
               {/* Download */}
               <div>
                 <h3 className="text-sm font-semibold text-[var(--color-text-secondary)] uppercase tracking-wide mb-4">
-                  Download from GitHub
+                  Download
                 </h3>
                 <div className="grid grid-cols-2 gap-3">
                   {CODENAMES.map((c) => (
-                    <button
+                    <div
                       key={c.id}
-                      onClick={() => handleFetchReleases(c.id)}
-                      className={`p-4 text-left rounded-lg border transition-all duration-200 ${
+                      className={`p-4 rounded-lg border transition-all duration-200 ${
                         selectedCodename === c.id
                           ? "border-[var(--color-accent)] bg-[var(--color-accent-glow)]"
                           : "border-[var(--color-border-subtle)] hover:border-[var(--color-border)] bg-[var(--color-background)]"
                       }`}
                     >
-                      <div className="flex items-center gap-2">
-                        <span className={`font-semibold ${c.color}`}>{c.name}</span>
-                        {selectedCodename === c.id && (
-                          <span className="w-1.5 h-1.5 rounded-full bg-[var(--color-accent)]" />
-                        )}
+                      <div className="flex items-center justify-between">
+                        <button
+                          onClick={() => handleFetchReleases(c.id)}
+                          className="flex items-center gap-2 text-left"
+                        >
+                          <span className={`font-semibold ${c.color}`}>{c.name}</span>
+                          {selectedCodename === c.id && (
+                            <span className="w-1.5 h-1.5 rounded-full bg-[var(--color-accent)]" />
+                          )}
+                        </button>
+                        <button
+                          onClick={() => openUrl(c.url)}
+                          className="p-1 text-[var(--color-text-muted)] hover:text-[var(--color-text-primary)] transition-colors"
+                          title="View on GitHub"
+                        >
+                          <ArrowTopRightOnSquareIcon className="w-4 h-4" />
+                        </button>
                       </div>
-                      <p className="text-xs text-[var(--color-text-muted)] mt-1">
-                        {c.desc}
-                      </p>
-                    </button>
+                      <button
+                        onClick={() => handleFetchReleases(c.id)}
+                        className="text-left w-full"
+                      >
+                        <p className="text-xs text-[var(--color-text-muted)] mt-1">
+                          {c.desc}
+                        </p>
+                      </button>
+                    </div>
                   ))}
                 </div>
 
@@ -486,6 +577,181 @@ export function SettingsModal() {
             </div>
           )}
 
+          {activeTab === "formatting" && (
+            <div className="space-y-6">
+              {/* Tinsel Formatter - About */}
+              <div>
+                <div className="flex items-center justify-between mb-4">
+                  <h3 className="text-sm font-semibold text-[var(--color-text-secondary)] uppercase tracking-wide">
+                    Tinsel Formatter
+                  </h3>
+                  <button
+                    onClick={() => openUrl("https://eddmann.com/santa-lang/formatter/")}
+                    className="flex items-center gap-1.5 text-xs text-[var(--color-text-muted)] hover:text-[var(--color-text-primary)] transition-colors"
+                  >
+                    View Docs
+                    <ArrowTopRightOnSquareIcon className="w-3.5 h-3.5" />
+                  </button>
+                </div>
+                <div className="bg-[var(--color-background)] rounded-lg border border-[var(--color-border-subtle)] p-4">
+                  <p className="text-sm text-[var(--color-text-secondary)]">
+                    An opinionated code formatter for santa-lang. Uses the Wadler-Lindig
+                    pretty printing algorithm to produce consistent, readable code with intelligent line-breaking.
+                  </p>
+                  <p className="text-xs text-[var(--color-text-muted)] mt-3">
+                    Keyboard shortcut: <code className="text-[var(--color-accent)] bg-[var(--color-surface-elevated)] px-1.5 py-0.5 rounded">{navigator.platform.includes("Mac") ? "Cmd+Shift+F" : "Ctrl+Shift+F"}</code>
+                  </p>
+                </div>
+              </div>
+
+              {/* Status */}
+              <div>
+                <h3 className="text-sm font-semibold text-[var(--color-text-secondary)] uppercase tracking-wide mb-4">
+                  Status
+                </h3>
+                <div className="bg-[var(--color-background)] rounded-lg border border-[var(--color-border-subtle)] p-4">
+                  {isCheckingUpdate ? (
+                    <div className="flex items-center gap-3">
+                      <div className="w-5 h-5 border-2 border-[var(--color-accent)] border-t-transparent rounded-full animate-spin" />
+                      <span className="text-sm text-[var(--color-text-muted)]">Checking for updates...</span>
+                    </div>
+                  ) : formatterStatus?.installed ? (
+                    <div className="space-y-4">
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center gap-3">
+                          <CheckCircleIcon className="w-5 h-5 text-[var(--color-success)]" />
+                          <div>
+                            <p className="font-medium text-[var(--color-text-primary)]">Installed</p>
+                            <p className="text-xs text-[var(--color-text-muted)]">
+                              Version {formatterStatus.version}
+                            </p>
+                          </div>
+                        </div>
+                        {formatterStatus.has_update && formatterStatus.latest_version && (
+                          <button
+                            onClick={() => {
+                              const latestRelease = formatterReleases.find(
+                                (r) => r.tag_name.replace(/^v/, "") === formatterStatus.latest_version
+                              );
+                              if (latestRelease) {
+                                handleDownloadFormatter(latestRelease);
+                              }
+                            }}
+                            disabled={formatterDownloading}
+                            className="flex items-center gap-2 px-4 py-2
+                                     bg-[var(--color-accent)] text-[#0f1419] font-medium
+                                     rounded-lg text-sm
+                                     hover:brightness-110 active:brightness-95
+                                     disabled:opacity-50 disabled:cursor-not-allowed
+                                     transition-all duration-150"
+                          >
+                            {formatterDownloading ? (
+                              <div className="w-4 h-4 border-2 border-current border-t-transparent rounded-full animate-spin" />
+                            ) : (
+                              <ArrowPathIcon className="w-4 h-4" />
+                            )}
+                            Update to {formatterStatus.latest_version}
+                          </button>
+                        )}
+                      </div>
+                      {formatterStatus.has_update && (
+                        <p className="text-xs text-[var(--color-info)] bg-[var(--color-info)]/10 px-3 py-2 rounded">
+                          A new version ({formatterStatus.latest_version}) is available
+                        </p>
+                      )}
+                    </div>
+                  ) : (
+                    <div className="space-y-4">
+                      <div className="flex items-center gap-3">
+                        <CloudArrowDownIcon className="w-5 h-5 text-[var(--color-text-muted)]" />
+                        <div>
+                          <p className="font-medium text-[var(--color-text-primary)]">Not Installed</p>
+                          <p className="text-xs text-[var(--color-text-muted)]">
+                            Download Tinsel to enable code formatting
+                          </p>
+                        </div>
+                      </div>
+
+                      {formatterReleasesLoading ? (
+                        <div className="flex items-center gap-2 text-sm text-[var(--color-text-muted)]">
+                          <div className="w-4 h-4 border-2 border-[var(--color-accent)] border-t-transparent rounded-full animate-spin" />
+                          Loading releases...
+                        </div>
+                      ) : formatterReleases.length > 0 ? (
+                        <div>
+                          {(() => {
+                            const latestRelease = formatterReleases[0];
+                            const asset = getFormatterPlatformAsset(latestRelease);
+                            return asset ? (
+                              <button
+                                onClick={() => handleDownloadFormatter(latestRelease)}
+                                disabled={formatterDownloading}
+                                className="flex items-center gap-2 px-4 py-2
+                                         bg-[var(--color-accent)] text-[#0f1419] font-medium
+                                         rounded-lg text-sm
+                                         hover:brightness-110 active:brightness-95
+                                         disabled:opacity-50 disabled:cursor-not-allowed
+                                         transition-all duration-150"
+                              >
+                                {formatterDownloading ? (
+                                  <div className="w-4 h-4 border-2 border-current border-t-transparent rounded-full animate-spin" />
+                                ) : (
+                                  <ArrowDownTrayIcon className="w-4 h-4" />
+                                )}
+                                Download {latestRelease.tag_name}
+                              </button>
+                            ) : (
+                              <span className="text-xs text-[var(--color-text-muted)]
+                                           bg-[var(--color-surface-elevated)] px-2 py-1 rounded">
+                                No build available for your platform
+                              </span>
+                            );
+                          })()}
+                        </div>
+                      ) : (
+                        <p className="text-xs text-[var(--color-text-muted)]">
+                          No releases found
+                        </p>
+                      )}
+                    </div>
+                  )}
+                </div>
+              </div>
+
+              {/* Preferences */}
+              <div>
+                <h3 className="text-sm font-semibold text-[var(--color-text-secondary)] uppercase tracking-wide mb-4">
+                  Preferences
+                </h3>
+                <div className={`flex items-center justify-between p-4 bg-[var(--color-background)] rounded-lg border border-[var(--color-border-subtle)] ${
+                  !formatterStatus?.installed ? "opacity-50" : ""
+                }`}>
+                  <div>
+                    <p className="font-medium text-[var(--color-text-primary)]">Format on Save</p>
+                    <p className="text-xs text-[var(--color-text-muted)] mt-0.5">
+                      Automatically format code when saving
+                    </p>
+                  </div>
+                  <button
+                    onClick={() => {
+                      if (formatterStatus?.installed) {
+                        setLocalSettings({ ...localSettings, format_on_save: !localSettings.format_on_save });
+                      }
+                    }}
+                    disabled={!formatterStatus?.installed}
+                    className={`relative w-11 h-6 rounded-full transition-colors duration-200 ${
+                      localSettings.format_on_save && formatterStatus?.installed ? "bg-[var(--color-accent)]" : "bg-[var(--color-surface-elevated)]"
+                    } ${!formatterStatus?.installed ? "cursor-not-allowed" : "cursor-pointer"}`}
+                  >
+                    <span className={`absolute top-1 left-1 w-4 h-4 bg-white rounded-full transition-transform duration-200 ${
+                      localSettings.format_on_save && formatterStatus?.installed ? "translate-x-5" : ""
+                    }`} />
+                  </button>
+                </div>
+              </div>
+            </div>
+          )}
+
           {activeTab === "general" && (
             <div className="space-y-6">
               {/* Theme Selection */}
@@ -539,30 +805,31 @@ export function SettingsModal() {
                 </div>
               </div>
 
-              {/* Format on Save */}
+              {/* AoC Session Token */}
               <div>
                 <label className="flex items-center gap-2 text-sm font-semibold text-[var(--color-text-secondary)] mb-3">
-                  <SwatchIcon className="w-4 h-4" />
-                  Code Formatting
+                  <KeyIcon className="w-4 h-4" />
+                  Advent of Code Session Token
                 </label>
-                <div className="flex items-center justify-between p-4 bg-[var(--color-background)] rounded-lg border border-[var(--color-border-subtle)]">
-                  <div>
-                    <p className="font-medium text-[var(--color-text-primary)]">Format on Save</p>
-                    <p className="text-xs text-[var(--color-text-muted)] mt-0.5">
-                      Automatically format code when saving
-                    </p>
-                  </div>
-                  <button
-                    onClick={() => setLocalSettings({ ...localSettings, format_on_save: !localSettings.format_on_save })}
-                    className={`relative w-11 h-6 rounded-full transition-colors duration-200 ${
-                      localSettings.format_on_save ? "bg-[var(--color-accent)]" : "bg-[var(--color-surface-elevated)]"
-                    }`}
-                  >
-                    <span className={`absolute top-1 left-1 w-4 h-4 bg-white rounded-full transition-transform duration-200 ${
-                      localSettings.format_on_save ? "translate-x-5" : ""
-                    }`} />
-                  </button>
-                </div>
+                <input
+                  type="password"
+                  value={localSettings.aoc_session_token || ""}
+                  onChange={(e) =>
+                    setLocalSettings({
+                      ...localSettings,
+                      aoc_session_token: e.target.value || null,
+                    })
+                  }
+                  placeholder="Your AoC session cookie value"
+                  className="w-full px-4 py-3 bg-[var(--color-background)]
+                           border border-[var(--color-border-subtle)] rounded-lg text-sm
+                           placeholder:text-[var(--color-text-faint)]
+                           focus:outline-none focus:ring-2 focus:ring-[var(--color-accent)] focus:border-transparent
+                           transition-all duration-200"
+                />
+                <p className="mt-2 text-xs text-[var(--color-text-muted)]">
+                  Used for fetching puzzle inputs via <code className="text-[var(--color-accent)]">read("aoc://YEAR/DAY")</code>
+                </p>
               </div>
 
               {/* Debug Mode */}
@@ -589,33 +856,6 @@ export function SettingsModal() {
                     }`} />
                   </button>
                 </div>
-              </div>
-
-              {/* AoC Session Token */}
-              <div>
-                <label className="flex items-center gap-2 text-sm font-semibold text-[var(--color-text-secondary)] mb-3">
-                  <KeyIcon className="w-4 h-4" />
-                  Advent of Code Session Token
-                </label>
-                <input
-                  type="password"
-                  value={localSettings.aoc_session_token || ""}
-                  onChange={(e) =>
-                    setLocalSettings({
-                      ...localSettings,
-                      aoc_session_token: e.target.value || null,
-                    })
-                  }
-                  placeholder="Your AoC session cookie value"
-                  className="w-full px-4 py-3 bg-[var(--color-background)]
-                           border border-[var(--color-border-subtle)] rounded-lg text-sm
-                           placeholder:text-[var(--color-text-faint)]
-                           focus:outline-none focus:ring-2 focus:ring-[var(--color-accent)] focus:border-transparent
-                           transition-all duration-200"
-                />
-                <p className="mt-2 text-xs text-[var(--color-text-muted)]">
-                  Used for fetching puzzle inputs via <code className="text-[var(--color-accent)]">read("aoc://YEAR/DAY")</code>
-                </p>
               </div>
             </div>
           )}

@@ -6,9 +6,8 @@ use std::process::Command;
 use std::sync::Mutex;
 use tauri::{AppHandle, State};
 
-/// Check if a version tag represents >= 1.0.1
-/// Handles tags like "v1.0.1", "1.0.1", "v1.2.3", etc.
-fn is_version_gte_1_0_1(tag: &str) -> bool {
+/// Parse version string into (major, minor, patch) tuple
+fn parse_version(tag: &str) -> (u32, u32, u32) {
     let version = tag.strip_prefix('v').unwrap_or(tag);
     let parts: Vec<&str> = version.split('.').collect();
 
@@ -25,8 +24,15 @@ fn is_version_gte_1_0_1(tag: &str) -> bool {
         .and_then(|s| s.parse::<u32>().ok())
         .unwrap_or(0);
 
-    // >= 1.0.1
-    major > 1 || (major == 1 && minor > 0) || (major == 1 && minor == 0 && patch >= 1)
+    (major, minor, patch)
+}
+
+/// Compare two version strings, returns true if v1 < v2
+fn is_version_less_than(v1: &str, v2: &str) -> bool {
+    let (maj1, min1, pat1) = parse_version(v1);
+    let (maj2, min2, pat2) = parse_version(v2);
+
+    (maj1, min1, pat1) < (maj2, min2, pat2)
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -34,6 +40,8 @@ pub struct FormatterStatus {
     pub installed: bool,
     pub path: Option<String>,
     pub version: Option<String>,
+    pub latest_version: Option<String>,
+    pub has_update: bool,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -65,14 +73,11 @@ pub struct Asset {
     pub size: u64,
 }
 
-#[derive(Deserialize)]
-struct VersionInfo {
-    version: String,
-}
-
+/// Detect formatter version from plain text output
+/// Tinsel outputs: "santa-lang Tinsel {version}"
 fn detect_formatter_version(path: &PathBuf) -> Option<String> {
     let output = Command::new(path)
-        .args(["--version", "-o", "json"])
+        .arg("-v")
         .output()
         .ok()?;
 
@@ -81,9 +86,14 @@ fn detect_formatter_version(path: &PathBuf) -> Option<String> {
     }
 
     let stdout = String::from_utf8_lossy(&output.stdout);
-    let info: VersionInfo = serde_json::from_str(&stdout).ok()?;
-
-    Some(info.version)
+    // Parse "santa-lang Tinsel {version}" format
+    let trimmed = stdout.trim();
+    if let Some(version) = trimmed.strip_prefix("santa-lang Tinsel ") {
+        Some(version.to_string())
+    } else {
+        // Fallback: return the whole output as version
+        Some(trimmed.to_string())
+    }
 }
 
 #[tauri::command]
@@ -97,6 +107,8 @@ pub fn get_formatter_status(state: State<'_, Mutex<AppState>>) -> Result<Formatt
                 installed: true,
                 path: Some(path.to_string_lossy().to_string()),
                 version,
+                latest_version: None,
+                has_update: false,
             });
         }
     }
@@ -105,6 +117,8 @@ pub fn get_formatter_status(state: State<'_, Mutex<AppState>>) -> Result<Formatt
         installed: false,
         path: None,
         version: None,
+        latest_version: None,
+        has_update: false,
     })
 }
 
@@ -127,13 +141,49 @@ pub async fn fetch_formatter_releases() -> Result<Vec<Release>, String> {
 
     let releases: Vec<Release> = response.json().await.map_err(|e| e.to_string())?;
 
-    // Filter to only releases >= 1.0.1 (when JSON version output was added)
-    let filtered: Vec<Release> = releases
-        .into_iter()
-        .filter(|r| is_version_gte_1_0_1(&r.tag_name))
-        .collect();
+    Ok(releases)
+}
 
-    Ok(filtered)
+/// Check if a formatter update is available
+#[tauri::command]
+pub async fn check_formatter_update(
+    state: State<'_, Mutex<AppState>>,
+) -> Result<FormatterStatus, String> {
+    // Get current installed version
+    let (installed, current_version, path) = {
+        let state = state.lock().map_err(|e| e.to_string())?;
+        if let Some(ref path) = state.settings.formatter_path {
+            if path.exists() {
+                let version = detect_formatter_version(path);
+                (true, version, Some(path.to_string_lossy().to_string()))
+            } else {
+                (false, None, None)
+            }
+        } else {
+            (false, None, None)
+        }
+    };
+
+    // Fetch latest release from GitHub
+    let releases = fetch_formatter_releases().await?;
+    let latest_version = releases.first().map(|r| {
+        r.tag_name.strip_prefix('v').unwrap_or(&r.tag_name).to_string()
+    });
+
+    // Check if update is available
+    let has_update = match (&current_version, &latest_version) {
+        (Some(current), Some(latest)) => is_version_less_than(current, latest),
+        (None, Some(_)) => false, // Not installed, so no "update" per se
+        _ => false,
+    };
+
+    Ok(FormatterStatus {
+        installed,
+        path,
+        version: current_version,
+        latest_version,
+        has_update,
+    })
 }
 
 #[tauri::command]
@@ -208,12 +258,11 @@ pub fn format_code(
         return Err("Formatter binary not found".to_string());
     }
 
-    // Run formatter with source via stdin
+    // Run formatter with source via stdin (Tinsel reads from stdin without flags)
     use std::io::Write;
     use std::process::Stdio;
 
     let mut child = Command::new(formatter_path)
-        .arg("-f")
         .stdin(Stdio::piped())
         .stdout(Stdio::piped())
         .stderr(Stdio::piped())

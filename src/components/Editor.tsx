@@ -6,7 +6,8 @@ import {
   startMultiExecution,
   clearExecutionsForTab,
 } from "../store/slices/executionSlice";
-import { openDownloadModal, formatCode } from "../store/slices/formatterSlice";
+import { formatCode } from "../store/slices/formatterSlice";
+import { openSettingsModal } from "../store/slices/settingsSlice";
 import { registerSantaLang } from "../lib/santa-lang-monarch";
 import type { editor } from "monaco-editor";
 import { useRef, useCallback, useEffect } from "react";
@@ -151,7 +152,7 @@ export function Editor() {
           if (!tab) return;
 
           if (!status?.installed) {
-            dispatch(openDownloadModal());
+            dispatch(openSettingsModal());
           } else {
             const result = await dispatch(formatCode(editor.getValue())).unwrap();
             if (result.success && result.formatted) {

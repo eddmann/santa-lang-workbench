@@ -18,6 +18,8 @@ export interface FormatterStatus {
   installed: boolean;
   path: string | null;
   version: string | null;
+  latest_version: string | null;
+  has_update: boolean;
 }
 
 export interface FormatResult {
