@@ -96,7 +96,7 @@ pub async fn run_execution(
                 }
 
                 // Try to parse as JSON
-                if let Ok(json) = serde_json::from_str::<serde_json::Value>(&line) {
+                if let Ok(json) = serde_json::from_str::<serde_json::Value>(line) {
                     let event = if is_first_line {
                         is_first_line = false;
                         ExecutionEvent {
@@ -154,11 +154,7 @@ pub async fn run_execution(
 
     // Build command string for debug mode
     let command = if debug_mode {
-        Some(format!(
-            "{} {}",
-            reindeer_path.display(),
-            args.join(" ")
-        ))
+        Some(format!("{} {}", reindeer_path.display(), args.join(" ")))
     } else {
         None
     };

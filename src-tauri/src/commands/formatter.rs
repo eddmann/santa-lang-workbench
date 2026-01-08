@@ -76,10 +76,7 @@ pub struct Asset {
 /// Detect formatter version from plain text output
 /// Tinsel outputs: "santa-lang Tinsel {version}"
 fn detect_formatter_version(path: &PathBuf) -> Option<String> {
-    let output = Command::new(path)
-        .arg("-v")
-        .output()
-        .ok()?;
+    let output = Command::new(path).arg("-v").output().ok()?;
 
     if !output.status.success() {
         return None;
@@ -100,17 +97,17 @@ fn detect_formatter_version(path: &PathBuf) -> Option<String> {
 pub fn get_formatter_status(state: State<'_, Mutex<AppState>>) -> Result<FormatterStatus, String> {
     let state = state.lock().map_err(|e| e.to_string())?;
 
-    if let Some(ref path) = state.settings.formatter_path {
-        if path.exists() {
-            let version = detect_formatter_version(path);
-            return Ok(FormatterStatus {
-                installed: true,
-                path: Some(path.to_string_lossy().to_string()),
-                version,
-                latest_version: None,
-                has_update: false,
-            });
-        }
+    if let Some(ref path) = state.settings.formatter_path
+        && path.exists()
+    {
+        let version = detect_formatter_version(path);
+        return Ok(FormatterStatus {
+            installed: true,
+            path: Some(path.to_string_lossy().to_string()),
+            version,
+            latest_version: None,
+            has_update: false,
+        });
     }
 
     Ok(FormatterStatus {
@@ -167,7 +164,10 @@ pub async fn check_formatter_update(
     // Fetch latest release from GitHub
     let releases = fetch_formatter_releases().await?;
     let latest_version = releases.first().map(|r| {
-        r.tag_name.strip_prefix('v').unwrap_or(&r.tag_name).to_string()
+        r.tag_name
+            .strip_prefix('v')
+            .unwrap_or(&r.tag_name)
+            .to_string()
     });
 
     // Check if update is available

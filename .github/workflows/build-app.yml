@@ -1,0 +1,100 @@
+name: Build App
+
+on:
+  workflow_call:
+    inputs:
+      release-tag:
+        required: true
+        type: string
+
+jobs:
+  build:
+    name: Build
+    runs-on: ${{ matrix.os }}
+    permissions:
+      contents: write
+    strategy:
+      matrix:
+        include:
+          - platform: linux-amd64
+            os: ubuntu-22.04
+            target: x86_64-unknown-linux-gnu
+          - platform: macos-amd64
+            os: macos-13
+            target: x86_64-apple-darwin
+          - platform: macos-arm64
+            os: macos-14
+            target: aarch64-apple-darwin
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set release version
+        run: |
+          VERSION="${{ inputs.release-tag }}"
+          # Update version in tauri.conf.json
+          if [[ "$RUNNER_OS" == "macOS" ]]; then
+            sed -i '' "s/\"version\": \"[0-9.]*\"/\"version\": \"${VERSION}\"/" src-tauri/tauri.conf.json
+          else
+            sed -i "s/\"version\": \"[0-9.]*\"/\"version\": \"${VERSION}\"/" src-tauri/tauri.conf.json
+          fi
+          # Update version in Cargo.toml
+          if [[ "$RUNNER_OS" == "macOS" ]]; then
+            sed -i '' "s/^version = \"[0-9.]*\"$/version = \"${VERSION}\"/" src-tauri/Cargo.toml
+          else
+            sed -i "s/^version = \"[0-9.]*\"$/version = \"${VERSION}\"/" src-tauri/Cargo.toml
+          fi
+          # Update version in package.json
+          if [[ "$RUNNER_OS" == "macOS" ]]; then
+            sed -i '' "s/\"version\": \"[0-9.]*\"/\"version\": \"${VERSION}\"/" package.json
+          else
+            sed -i "s/\"version\": \"[0-9.]*\"/\"version\": \"${VERSION}\"/" package.json
+          fi
+
+      - name: Install system dependencies (Linux)
+        if: matrix.platform == 'linux-amd64'
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y libwebkit2gtk-4.1-dev libappindicator3-dev librsvg2-dev patchelf
+
+      - name: Setup Bun
+        uses: oven-sh/setup-bun@v2
+
+      - name: Install Rust
+        uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: ${{ matrix.target }}
+
+      - name: Load Rust cache
+        uses: Swatinem/rust-cache@v2
+        with:
+          workspaces: src-tauri
+
+      - name: Install dependencies
+        run: make install
+
+      - name: Build Tauri app
+        run: make build/${{ matrix.target }}
+
+      - name: Upload artifacts (Linux)
+        if: matrix.platform == 'linux-amd64'
+        run: |
+          cd src-tauri/target/${{ matrix.target }}/release/bundle
+          # Upload .deb
+          mv deb/*.deb santa-lang-workbench-${{ inputs.release-tag }}-${{ matrix.platform }}.deb
+          gh release upload ${{ inputs.release-tag }} santa-lang-workbench-${{ inputs.release-tag }}-${{ matrix.platform }}.deb --clobber
+          # Upload .AppImage
+          mv appimage/*.AppImage santa-lang-workbench-${{ inputs.release-tag }}-${{ matrix.platform }}.AppImage
+          gh release upload ${{ inputs.release-tag }} santa-lang-workbench-${{ inputs.release-tag }}-${{ matrix.platform }}.AppImage --clobber
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Upload artifacts (macOS)
+        if: startsWith(matrix.platform, 'macos')
+        run: |
+          cd src-tauri/target/${{ matrix.target }}/release/bundle
+          # Upload .dmg
+          mv dmg/*.dmg santa-lang-workbench-${{ inputs.release-tag }}-${{ matrix.platform }}.dmg
+          gh release upload ${{ inputs.release-tag }} santa-lang-workbench-${{ inputs.release-tag }}-${{ matrix.platform }}.dmg --clobber
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

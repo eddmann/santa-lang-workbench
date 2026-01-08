@@ -167,7 +167,7 @@ export const language: languages.IMonarchLanguage = {
   ],
 
   // Symbols used in the language
-  symbols: /[=><!~?:&|+\-*\/\^%]+/,
+  symbols: /[=><!~?:&|+\-*/^%]+/,
 
   // String escape sequences
   escapes: /\\[nrtbf"\\]/,
@@ -220,7 +220,7 @@ export const language: languages.IMonarchLanguage = {
 
       // Operators
       [
-        /[=><!~?:&|+\-*\/\^%]+/,
+        /[=><!~?:&|+\-*/^%]+/,
         {
           cases: {
             "@operators": "operator",
@@ -230,7 +230,7 @@ export const language: languages.IMonarchLanguage = {
       ],
 
       // Brackets
-      [/[{}()\[\]]/, "@brackets"],
+      [/[{}()[\]]/, "@brackets"],
 
       // Identifiers and keywords
       [
