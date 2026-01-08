@@ -20,6 +20,8 @@ pub struct Settings {
     #[serde(default)]
     pub format_on_save: bool,
     pub formatter_path: Option<PathBuf>,
+    #[serde(default)]
+    pub debug_mode: bool,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, Default)]

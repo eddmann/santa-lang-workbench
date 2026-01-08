@@ -22,12 +22,13 @@ pub async fn run_execution(
     mode: String, // "run", "test", "script"
     working_dir: Option<String>,
 ) -> Result<(), String> {
-    let (reindeer_path, aoc_token) = {
+    let (reindeer_path, aoc_token, debug_mode) = {
         let state = state.lock().map_err(|e| e.to_string())?;
         let reindeer = state.reindeer.get(&impl_id).ok_or("Reindeer not found")?;
         (
             reindeer.path.clone(),
             state.settings.aoc_session_token.clone(),
+            state.settings.debug_mode,
         )
     };
 
@@ -151,13 +152,27 @@ pub async fn run_execution(
     // Clean up temp file
     let _ = std::fs::remove_file(&temp_file);
 
+    // Build command string for debug mode
+    let command = if debug_mode {
+        Some(format!(
+            "{} {}",
+            reindeer_path.display(),
+            args.join(" ")
+        ))
+    } else {
+        None
+    };
+
     // Emit completion event
     let _ = window.emit(
         "execution-event",
         ExecutionEvent {
             execution_id: execution_id.clone(),
             event_type: "complete".to_string(),
-            data: serde_json::json!({ "exit_code": exit_code }),
+            data: serde_json::json!({
+                "exit_code": exit_code,
+                "command": command
+            }),
         },
     );
 

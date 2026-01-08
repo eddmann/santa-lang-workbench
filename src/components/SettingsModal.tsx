@@ -21,6 +21,7 @@ import {
   CheckCircleIcon,
   SwatchIcon,
   ChevronRightIcon,
+  BugAntIcon,
 } from "@heroicons/react/20/solid";
 import type { Settings, Release } from "../lib/types";
 import { themes, applyTheme, getTheme } from "../lib/themes";
@@ -559,6 +560,32 @@ export function SettingsModal() {
                   >
                     <span className={`absolute top-1 left-1 w-4 h-4 bg-white rounded-full transition-transform duration-200 ${
                       localSettings.format_on_save ? "translate-x-5" : ""
+                    }`} />
+                  </button>
+                </div>
+              </div>
+
+              {/* Debug Mode */}
+              <div>
+                <label className="flex items-center gap-2 text-sm font-semibold text-[var(--color-text-secondary)] mb-3">
+                  <BugAntIcon className="w-4 h-4" />
+                  Debugging
+                </label>
+                <div className="flex items-center justify-between p-4 bg-[var(--color-background)] rounded-lg border border-[var(--color-border-subtle)]">
+                  <div>
+                    <p className="font-medium text-[var(--color-text-primary)]">Debug Mode</p>
+                    <p className="text-xs text-[var(--color-text-muted)] mt-0.5">
+                      Show executed command in output
+                    </p>
+                  </div>
+                  <button
+                    onClick={() => setLocalSettings({ ...localSettings, debug_mode: !localSettings.debug_mode })}
+                    className={`relative w-11 h-6 rounded-full transition-colors duration-200 ${
+                      localSettings.debug_mode ? "bg-[var(--color-accent)]" : "bg-[var(--color-surface-elevated)]"
+                    }`}
+                  >
+                    <span className={`absolute top-1 left-1 w-4 h-4 bg-white rounded-full transition-transform duration-200 ${
+                      localSettings.debug_mode ? "translate-x-5" : ""
                     }`} />
                   </button>
                 </div>

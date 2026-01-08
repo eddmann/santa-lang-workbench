@@ -15,6 +15,7 @@ const initialState: SettingsState = {
     default_reindeer: null,
     theme: "dark",
     format_on_save: false,
+    debug_mode: false,
   },
   isLoading: false,
   isModalOpen: false,

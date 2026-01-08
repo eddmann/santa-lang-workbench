@@ -11,6 +11,7 @@ export interface Settings {
   default_reindeer: string | null;
   theme: string;
   format_on_save: boolean;
+  debug_mode: boolean;
 }
 
 export interface FormatterStatus {
@@ -120,6 +121,7 @@ export interface ExecutionInstance {
   consoleOutput: string[];
   exitCode: number | null;
   startedAt: number;
+  command: string | null;
 }
 
 export interface AocPuzzle {

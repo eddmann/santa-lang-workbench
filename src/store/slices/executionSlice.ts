@@ -47,9 +47,15 @@ const setupGlobalListener = async (dispatch: AppDispatch) => {
       case "console":
         dispatch(appendConsole({ executionId: execution_id, message: (data as { message: string }).message }));
         break;
-      case "complete":
-        dispatch(completeExecution({ executionId: execution_id, exitCode: (data as { exit_code: number }).exit_code }));
+      case "complete": {
+        const completeData = data as { exit_code: number; command?: string | null };
+        dispatch(completeExecution({
+          executionId: execution_id,
+          exitCode: completeData.exit_code,
+          command: completeData.command,
+        }));
         break;
+      }
       case "error":
         dispatch(setError({ executionId: execution_id, message: (data as { message: string }).message }));
         break;
@@ -203,6 +209,7 @@ export const executionSlice = createSlice({
         consoleOutput: [],
         exitCode: null,
         startedAt: Date.now(),
+        command: null,
       };
       // Set as active if we don't have one or if in single mode
       if (!state.activeExecutionId || !state.multiSelectMode) {
@@ -250,12 +257,13 @@ export const executionSlice = createSlice({
       if (!execution) return;
       execution.consoleOutput.push(message);
     },
-    completeExecution: (state, action: PayloadAction<{ executionId: string; exitCode: number }>) => {
-      const { executionId, exitCode } = action.payload;
+    completeExecution: (state, action: PayloadAction<{ executionId: string; exitCode: number; command?: string | null }>) => {
+      const { executionId, exitCode, command } = action.payload;
       const execution = state.executions[executionId];
       if (!execution) return;
       execution.status = exitCode === 0 ? "complete" : "error";
       execution.exitCode = exitCode;
+      execution.command = command ?? null;
     },
     setError: (state, action: PayloadAction<{ executionId: string; message: string }>) => {
       const { executionId, message } = action.payload;
