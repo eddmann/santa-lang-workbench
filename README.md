@@ -64,4 +64,4 @@ Built to provide a controlled environment for writing and testing AoC solutions,
 
 ## License
 
-MIT
+MIT License - see [LICENSE](LICENSE) for details.
