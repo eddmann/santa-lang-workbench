@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { useAppDispatch, useAppSelector } from "../store";
 import { closeSettingsModal, saveSettings } from "../store/slices/settingsSlice";
 import {
@@ -20,6 +20,7 @@ import {
   KeyIcon,
   CheckCircleIcon,
   SwatchIcon,
+  ChevronRightIcon,
 } from "@heroicons/react/20/solid";
 import type { Settings, Release } from "../lib/types";
 import { themes, applyTheme, getTheme } from "../lib/themes";
@@ -45,6 +46,34 @@ export function SettingsModal() {
   );
   const [selectedCodename, setSelectedCodename] = useState<string | null>(null);
   const [downloadingRelease, setDownloadingRelease] = useState<string | null>(null);
+  const [expandedCodenames, setExpandedCodenames] = useState<Set<string>>(new Set());
+
+  // Group reindeer by codename, sorted by version descending within each group
+  const groupedReindeer = useMemo(() => {
+    const groups: Record<string, typeof reindeer> = {};
+    for (const r of reindeer) {
+      (groups[r.codename] ||= []).push(r);
+    }
+    // Sort each group by version descending (newest first)
+    for (const codename in groups) {
+      groups[codename].sort((a, b) =>
+        b.version.localeCompare(a.version, undefined, { numeric: true })
+      );
+    }
+    return groups;
+  }, [reindeer]);
+
+  const toggleCodename = (codename: string) => {
+    setExpandedCodenames((prev) => {
+      const next = new Set(prev);
+      if (next.has(codename)) {
+        next.delete(codename);
+      } else {
+        next.add(codename);
+      }
+      return next;
+    });
+  };
 
   useEffect(() => {
     setLocalSettings(settings);
@@ -226,46 +255,110 @@ export function SettingsModal() {
                     </p>
                   </div>
                 ) : (
-                  <div className="space-y-2">
-                    {reindeer.map((r) => (
-                      <div
-                        key={r.id}
-                        className="group flex items-center justify-between p-4
-                                 bg-[var(--color-background)] rounded-lg
-                                 border border-[var(--color-border-subtle)]
-                                 hover:border-[var(--color-border)] transition-colors duration-200"
-                      >
-                        <div className="flex items-center gap-3">
-                          <div className="w-8 h-8 rounded-lg bg-[var(--color-surface-elevated)]
-                                        flex items-center justify-center">
-                            <CpuChipIcon className="w-4 h-4 text-[var(--color-text-muted)]" />
-                          </div>
-                          <div>
-                            <div className="flex items-center gap-2">
-                              <span className="font-semibold text-[var(--color-text-primary)]">
-                                {r.name}
-                              </span>
+                  <div className="space-y-2 max-h-72 overflow-auto">
+                    {CODENAMES.filter((c) => groupedReindeer[c.id]?.length > 0).map((c) => {
+                      const versions = groupedReindeer[c.id];
+                      const isExpanded = expandedCodenames.has(c.id);
+                      const hasMultiple = versions.length > 1;
+
+                      // Single version - show inline
+                      if (!hasMultiple) {
+                        const r = versions[0];
+                        return (
+                          <div
+                            key={c.id}
+                            className="group flex items-center justify-between p-3
+                                     bg-[var(--color-background)] rounded-lg border border-[var(--color-border-subtle)]"
+                            title={r.path}
+                          >
+                            <div className="flex items-center gap-3">
+                              <span className={`font-semibold ${c.color}`}>{c.name}</span>
                               <span className="text-xs font-mono text-[var(--color-text-muted)]
-                                           bg-[var(--color-surface-elevated)] px-1.5 py-0.5 rounded">
+                                             bg-[var(--color-surface-elevated)] px-1.5 py-0.5 rounded">
                                 {r.version}
                               </span>
                             </div>
-                            <p className="text-xs text-[var(--color-text-muted)] truncate max-w-md mt-0.5 font-mono">
-                              {r.path}
-                            </p>
+                            <button
+                              onClick={() => handleRemove(r.id)}
+                              className="p-1.5 text-[var(--color-text-muted)]
+                                       hover:text-[var(--color-error)] hover:bg-[var(--color-error-glow)]
+                                       rounded transition-colors duration-150
+                                       opacity-0 group-hover:opacity-100"
+                            >
+                              <TrashIcon className="w-3.5 h-3.5" />
+                            </button>
                           </div>
-                        </div>
-                        <button
-                          onClick={() => handleRemove(r.id)}
-                          className="p-2 text-[var(--color-text-muted)]
-                                   hover:text-[var(--color-error)] hover:bg-[var(--color-error-glow)]
-                                   rounded-lg transition-colors duration-150
-                                   opacity-0 group-hover:opacity-100"
+                        );
+                      }
+
+                      // Multiple versions - show collapsible
+                      return (
+                        <div
+                          key={c.id}
+                          className="bg-[var(--color-background)] rounded-lg border border-[var(--color-border-subtle)]
+                                   overflow-hidden"
                         >
-                          <TrashIcon className="w-4 h-4" />
-                        </button>
-                      </div>
-                    ))}
+                          {/* Group Header */}
+                          <button
+                            onClick={() => toggleCodename(c.id)}
+                            className="w-full flex items-center justify-between p-3
+                                     hover:bg-[var(--color-surface-elevated)] transition-colors duration-150"
+                          >
+                            <div className="flex items-center gap-2">
+                              <ChevronRightIcon
+                                className={`w-4 h-4 text-[var(--color-text-muted)] transition-transform duration-200
+                                          ${isExpanded ? "rotate-90" : ""}`}
+                              />
+                              <span className={`font-semibold ${c.color}`}>{c.name}</span>
+                            </div>
+                            <span className="text-xs text-[var(--color-text-muted)]
+                                           bg-[var(--color-surface-elevated)] px-2 py-0.5 rounded-full">
+                              {versions.length} versions
+                            </span>
+                          </button>
+
+                          {/* Expanded Version List */}
+                          {isExpanded && (
+                            <div className="border-t border-[var(--color-border-subtle)] p-2 space-y-1
+                                          animate-slide-up">
+                              {versions.map((r, idx) => (
+                                <div
+                                  key={r.id}
+                                  className="group flex items-center justify-between px-3 py-2
+                                           rounded-md hover:bg-[var(--color-surface-elevated)]
+                                           transition-colors duration-150"
+                                  title={r.path}
+                                >
+                                  <div className="flex items-center gap-2">
+                                    <span className="text-sm font-mono text-[var(--color-text-primary)]">
+                                      {r.version}
+                                    </span>
+                                    {idx === 0 && (
+                                      <span className="text-[10px] text-[var(--color-accent)]
+                                                     bg-[var(--color-accent-glow)] px-1.5 py-0.5 rounded">
+                                        latest
+                                      </span>
+                                    )}
+                                  </div>
+                                  <button
+                                    onClick={(e) => {
+                                      e.stopPropagation();
+                                      handleRemove(r.id);
+                                    }}
+                                    className="p-1.5 text-[var(--color-text-muted)]
+                                             hover:text-[var(--color-error)] hover:bg-[var(--color-error-glow)]
+                                             rounded transition-colors duration-150
+                                             opacity-0 group-hover:opacity-100"
+                                  >
+                                    <TrashIcon className="w-3.5 h-3.5" />
+                                  </button>
+                                </div>
+                              ))}
+                            </div>
+                          )}
+                        </div>
+                      );
+                    })}
                   </div>
                 )}
               </div>
