@@ -37,8 +37,8 @@ jobs:
           # Update ARM64 SHA256
           sed -i "s/sha256 arm:   \"[^\"]*\"/sha256 arm:   \"${SHA_ARM64}\"/" Casks/santa-lang-workbench.rb
 
-          # Update AMD64 SHA256
-          sed -i "s/intel: \"[^\"]*\"/intel: \"${SHA_AMD64}\"/" Casks/santa-lang-workbench.rb
+          # Update AMD64 SHA256 (only on sha256 line, not arch line)
+          sed -i "s/^\([[:space:]]*\)intel: \"[^\"]*\"/\1intel: \"${SHA_AMD64}\"/" Casks/santa-lang-workbench.rb
 
           # Commit and push
           git config user.name "github-actions[bot]"
