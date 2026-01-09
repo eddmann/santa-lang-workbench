@@ -46,9 +46,14 @@ pub async fn run_execution(
         _ => {}
     }
 
-    // Write source to a temporary file
-    let temp_dir = std::env::temp_dir();
-    let temp_file = temp_dir.join(format!("santa-workbench-{}.santa", uuid::Uuid::new_v4()));
+    // Write source to a temporary file in the working directory if available.
+    // This ensures reindeer implementations (which derive their working directory
+    // from the script's parent) will look for .input files in the correct location.
+    let temp_dir = match &working_dir {
+        Some(dir) => std::path::PathBuf::from(dir),
+        None => std::env::temp_dir(),
+    };
+    let temp_file = temp_dir.join(format!(".santa-workbench-{}.santa", uuid::Uuid::new_v4()));
     std::fs::write(&temp_file, &source).map_err(|e| e.to_string())?;
 
     args.push(temp_file.to_string_lossy().to_string());
