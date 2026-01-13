@@ -1,6 +1,8 @@
 # santa-lang Workbench
 
-<!-- TODO: Add screenshot -->
+<p align="center">
+  <img src="docs/icon.png" alt="santa-lang Workbench" width="200">
+</p>
 
 A cross-platform desktop IDE for [santa-lang](https://eddmann.com/santa-lang/), a functional programming language designed for solving Advent of Code puzzles.
 
