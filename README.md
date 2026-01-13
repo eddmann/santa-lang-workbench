@@ -27,7 +27,7 @@ Built to provide a controlled environment for writing and testing AoC solutions,
 <p align="center"><em>Integrated AoC puzzle descriptions</em></p>
 </td>
 <td width="50%">
-<img src="docs/editor-comparision-graph.png" alt="Performance comparison">
+<img src="docs/editor-comparison-graph.png" alt="Performance comparison">
 <p align="center"><em>Compare performance across reindeer</em></p>
 </td>
 </tr>
@@ -53,6 +53,8 @@ Built to provide a controlled environment for writing and testing AoC solutions,
 <p align="center"><em>Code formatting with Tinsel</em></p>
 </td>
 <td width="50%">
+<img src="docs/settings-reindeer-download.png" alt="Download reindeer">
+<p align="center"><em>Download new reindeer versions</em></p>
 </td>
 </tr>
 </table>
@@ -69,7 +71,9 @@ brew install eddmann/tap/santa-lang-workbench
 
 ### Manual Download
 
-Download the latest release from [GitHub Releases](https://github.com/eddmann/santa-lang-workbench/releases).
+Download the latest release from [GitHub Releases](https://github.com/eddmann/santa-lang-workbench/releases):
+- **macOS**: `.dmg` (Intel and Apple Silicon)
+- **Linux**: `.deb` and `.AppImage`
 
 ## Features
 
@@ -120,7 +124,7 @@ Download the latest release from [GitHub Releases](https://github.com/eddmann/sa
 | `Cmd + Enter` | Run solution |
 | `Cmd + Shift + Enter` | Run tests |
 | `Cmd + S` | Save file |
-| `Cmd + K` | Format code |
+| `Cmd + Shift + F` | Format code |
 
 ## Related Projects
 
