@@ -8,6 +8,57 @@ A cross-platform desktop IDE for [santa-lang](https://eddmann.com/santa-lang/), 
 
 Built to provide a controlled environment for writing and testing AoC solutions, while exploring the different backend implementations (reindeer) available for santa-lang.
 
+## Screenshots
+
+<table>
+<tr>
+<td width="50%">
+<img src="docs/editor-answer.png" alt="Running a solution">
+<p align="center"><em>Run solutions with real-time output</em></p>
+</td>
+<td width="50%">
+<img src="docs/editor-tests.png" alt="Running tests">
+<p align="center"><em>Run tests with expected values</em></p>
+</td>
+</tr>
+<tr>
+<td width="50%">
+<img src="docs/editor-puzzle.png" alt="Puzzle integration">
+<p align="center"><em>Integrated AoC puzzle descriptions</em></p>
+</td>
+<td width="50%">
+<img src="docs/editor-comparision-graph.png" alt="Performance comparison">
+<p align="center"><em>Compare performance across reindeer</em></p>
+</td>
+</tr>
+</table>
+
+<details>
+<summary>Settings</summary>
+
+<table>
+<tr>
+<td width="50%">
+<img src="docs/settings-general.png" alt="General settings">
+<p align="center"><em>Theme and AoC session configuration</em></p>
+</td>
+<td width="50%">
+<img src="docs/settings-reindeer-list.png" alt="Reindeer management">
+<p align="center"><em>Manage installed reindeer</em></p>
+</td>
+</tr>
+<tr>
+<td width="50%">
+<img src="docs/settings-formatting.png" alt="Formatting settings">
+<p align="center"><em>Code formatting with Tinsel</em></p>
+</td>
+<td width="50%">
+</td>
+</tr>
+</table>
+
+</details>
+
 ## Installation
 
 ### Homebrew (macOS)
