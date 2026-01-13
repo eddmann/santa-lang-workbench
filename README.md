@@ -8,6 +8,20 @@ A cross-platform desktop IDE for [santa-lang](https://eddmann.com/santa-lang/), 
 
 Built to provide a controlled environment for writing and testing AoC solutions, while exploring the different backend implementations (reindeer) available for santa-lang.
 
+## Installation
+
+### Homebrew (macOS)
+
+```bash
+brew install eddmann/tap/santa-lang-workbench
+```
+
+### Manual Download
+
+Download the latest release from [GitHub Releases](https://github.com/eddmann/santa-lang-workbench/releases):
+- **macOS**: `.dmg` (Intel and Apple Silicon)
+- **Linux**: `.deb` and `.AppImage`
+
 ## Screenshots
 
 <table>
@@ -60,20 +74,6 @@ Built to provide a controlled environment for writing and testing AoC solutions,
 </table>
 
 </details>
-
-## Installation
-
-### Homebrew (macOS)
-
-```bash
-brew install eddmann/tap/santa-lang-workbench
-```
-
-### Manual Download
-
-Download the latest release from [GitHub Releases](https://github.com/eddmann/santa-lang-workbench/releases):
-- **macOS**: `.dmg` (Intel and Apple Silicon)
-- **Linux**: `.deb` and `.AppImage`
 
 ## Features
 
