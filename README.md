@@ -4,7 +4,7 @@
   <img src="docs/icon.png" alt="santa-lang Workbench" width="200">
 </p>
 
-A cross-platform desktop IDE for [santa-lang](https://eddmann.com/santa-lang/), a functional programming language designed for solving Advent of Code puzzles.
+A cross-platform desktop IDE for [santa-lang](https://eddmann.com/santa-lang/), a functional programming language designed for solving [Advent of Code](https://adventofcode.com/) puzzles.
 
 Built to provide a controlled environment for writing and testing AoC solutions, while exploring the different backend implementations (reindeer) available for santa-lang.
 
