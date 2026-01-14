@@ -19,6 +19,7 @@ brew install eddmann/tap/santa-lang-workbench
 ### Manual Download
 
 Download the latest release from [GitHub Releases](https://github.com/eddmann/santa-lang-workbench/releases):
+
 - **macOS**: `.dmg` (Intel and Apple Silicon)
 - **Linux**: `.deb` and `.AppImage`
 
@@ -99,32 +100,32 @@ Download the latest release from [GitHub Releases](https://github.com/eddmann/sa
 
 ### Commands
 
-| Command | Description |
-|---------|-------------|
+| Command        | Description              |
+| -------------- | ------------------------ |
 | `make install` | Install all dependencies |
-| `make dev` | Start development server |
-| `make build` | Build production app |
-| `make fmt` | Format all code |
-| `make lint` | Run all linting |
+| `make dev`     | Start development server |
+| `make build`   | Build production app     |
+| `make fmt`     | Format all code          |
+| `make lint`    | Run all linting          |
 
 ## Reindeer
 
-| Codename | Type | Description | Repository |
-|----------|------|-------------|------------|
-| Comet | Rust | Tree-walking interpreter | [eddmann/santa-lang-comet](https://github.com/eddmann/santa-lang-comet) |
-| Blitzen | Rust | Bytecode VM | [eddmann/santa-lang-blitzen](https://github.com/eddmann/santa-lang-blitzen) |
-| Dasher | Rust | LLVM native compiler | [eddmann/santa-lang-dasher](https://github.com/eddmann/santa-lang-dasher) |
-| Donner | Kotlin | JVM bytecode compiler | [eddmann/santa-lang-donner](https://github.com/eddmann/santa-lang-donner) |
-| Prancer | TypeScript | JavaScript interpreter | [eddmann/santa-lang-prancer](https://github.com/eddmann/santa-lang-prancer) |
+| Codename | Type       | Description              | Repository                                                                  |
+| -------- | ---------- | ------------------------ | --------------------------------------------------------------------------- |
+| Comet    | Rust       | Tree-walking interpreter | [eddmann/santa-lang-comet](https://github.com/eddmann/santa-lang-comet)     |
+| Blitzen  | Rust       | Bytecode VM              | [eddmann/santa-lang-blitzen](https://github.com/eddmann/santa-lang-blitzen) |
+| Dasher   | Rust       | LLVM native compiler     | [eddmann/santa-lang-dasher](https://github.com/eddmann/santa-lang-dasher)   |
+| Donner   | Kotlin     | JVM bytecode compiler    | [eddmann/santa-lang-donner](https://github.com/eddmann/santa-lang-donner)   |
+| Prancer  | TypeScript | Tree-walking interpreter | [eddmann/santa-lang-prancer](https://github.com/eddmann/santa-lang-prancer) |
 
 ## Keyboard Shortcuts
 
-| Shortcut | Action |
-|----------|--------|
-| `Cmd + Enter` | Run solution |
-| `Cmd + Shift + Enter` | Run tests |
-| `Cmd + S` | Save file |
-| `Cmd + Shift + F` | Format code |
+| Shortcut              | Action       |
+| --------------------- | ------------ |
+| `Cmd + Enter`         | Run solution |
+| `Cmd + Shift + Enter` | Run tests    |
+| `Cmd + S`             | Save file    |
+| `Cmd + Shift + F`     | Format code  |
 
 ## Related Projects
 
