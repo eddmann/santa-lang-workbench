@@ -1,0 +1,1551 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>santa-lang Workbench - Desktop IDE for Advent of Code</title>
+    <meta name="description" content="A cross-platform desktop IDE for santa-lang, a functional programming language designed for solving Advent of Code puzzles.">
+    <meta name="keywords" content="santa-lang, Advent of Code, IDE, functional programming, AoC, code editor, Tauri, desktop app">
+    <meta name="author" content="Edd Mann">
+    <meta name="theme-color" content="#0f1419">
+
+    <link rel="canonical" href="https://eddmann.github.io/santa-lang-workbench/">
+    <link rel="icon" type="image/png" href="logo.png">
+
+    <!-- Open Graph -->
+    <meta property="og:title" content="santa-lang Workbench - Desktop IDE for Advent of Code">
+    <meta property="og:description" content="A cross-platform desktop IDE for santa-lang, a functional programming language designed for solving Advent of Code puzzles.">
+    <meta property="og:image" content="https://eddmann.github.io/santa-lang-workbench/logo.png">
+    <meta property="og:url" content="https://eddmann.github.io/santa-lang-workbench/">
+    <meta property="og:type" content="website">
+    <meta property="og:site_name" content="santa-lang Workbench">
+
+    <!-- Twitter Card -->
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:title" content="santa-lang Workbench - Desktop IDE for Advent of Code">
+    <meta name="twitter:description" content="A cross-platform desktop IDE for santa-lang, a functional programming language designed for solving Advent of Code puzzles.">
+    <meta name="twitter:image" content="https://eddmann.github.io/santa-lang-workbench/logo.png">
+
+    <!-- JSON-LD -->
+    <script type="application/ld+json">
+    {
+        "@context": "https://schema.org",
+        "@type": "SoftwareApplication",
+        "name": "santa-lang Workbench",
+        "description": "A cross-platform desktop IDE for santa-lang, a functional programming language designed for solving Advent of Code puzzles.",
+        "applicationCategory": "DeveloperApplication",
+        "operatingSystem": "macOS, Linux",
+        "softwareVersion": "0.1.0",
+        "author": {
+            "@type": "Person",
+            "name": "Edd Mann",
+            "url": "https://eddmann.com"
+        },
+        "license": "https://opensource.org/licenses/MIT",
+        "url": "https://github.com/eddmann/santa-lang-workbench",
+        "downloadUrl": "https://github.com/eddmann/santa-lang-workbench/releases"
+    }
+    </script>
+
+    <!-- Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+
+    <!-- Tailwind -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: {
+                        sans: ['Plus Jakarta Sans', 'system-ui', 'sans-serif'],
+                        mono: ['JetBrains Mono', 'monospace'],
+                    },
+                    colors: {
+                        bg: {
+                            DEFAULT: '#0f1419',
+                            surface: '#151a21',
+                            elevated: '#1c232d',
+                            hover: '#242d3a',
+                        },
+                        accent: {
+                            DEFAULT: '#4ade80',
+                            hover: '#22c55e',
+                            glow: 'rgba(74, 222, 128, 0.15)',
+                        },
+                        info: {
+                            DEFAULT: '#60a5fa',
+                            glow: 'rgba(96, 165, 250, 0.15)',
+                        },
+                        txt: {
+                            primary: '#e8eef4',
+                            secondary: '#9ba8b9',
+                            muted: '#5c6b7d',
+                            faint: '#3d4a5c',
+                        },
+                        border: {
+                            DEFAULT: '#2a3544',
+                            subtle: '#1e2736',
+                        },
+                    },
+                },
+            },
+        }
+    </script>
+
+    <style>
+        /* Reduced motion */
+        @media (prefers-reduced-motion: reduce) {
+            *, *::before, *::after {
+                animation-duration: 0.01ms !important;
+                animation-iteration-count: 1 !important;
+                transition-duration: 0.01ms !important;
+            }
+        }
+
+        /* Base */
+        html { scroll-behavior: smooth; }
+        body {
+            background: #0f1419;
+            color: #e8eef4;
+            font-family: 'Plus Jakarta Sans', system-ui, sans-serif;
+        }
+
+        /* Custom scrollbar */
+        ::-webkit-scrollbar { width: 8px; height: 8px; }
+        ::-webkit-scrollbar-track { background: transparent; }
+        ::-webkit-scrollbar-thumb {
+            background: #2a3544;
+            border-radius: 4px;
+        }
+        ::-webkit-scrollbar-thumb:hover { background: #5c6b7d; }
+
+        /* Gradient text */
+        .gradient-text {
+            background: linear-gradient(135deg, #4ade80 0%, #60a5fa 50%, #a78bfa 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        /* Aurora orbs */
+        .aurora-orb {
+            position: absolute;
+            border-radius: 50%;
+            filter: blur(80px);
+            opacity: 0.4;
+            animation: float 20s ease-in-out infinite;
+        }
+        .aurora-orb-1 {
+            width: 600px;
+            height: 600px;
+            background: radial-gradient(circle, rgba(74, 222, 128, 0.3) 0%, transparent 70%);
+            top: -200px;
+            left: -100px;
+            animation-delay: 0s;
+        }
+        .aurora-orb-2 {
+            width: 500px;
+            height: 500px;
+            background: radial-gradient(circle, rgba(96, 165, 250, 0.25) 0%, transparent 70%);
+            top: 100px;
+            right: -150px;
+            animation-delay: -7s;
+        }
+        .aurora-orb-3 {
+            width: 400px;
+            height: 400px;
+            background: radial-gradient(circle, rgba(167, 139, 250, 0.2) 0%, transparent 70%);
+            bottom: -100px;
+            left: 30%;
+            animation-delay: -14s;
+        }
+
+        @keyframes float {
+            0%, 100% { transform: translate(0, 0) scale(1); }
+            25% { transform: translate(30px, -30px) scale(1.05); }
+            50% { transform: translate(-20px, 20px) scale(0.95); }
+            75% { transform: translate(20px, 10px) scale(1.02); }
+        }
+
+        /* Typing animation */
+        .typing-cursor {
+            display: inline-block;
+            width: 2px;
+            height: 1.2em;
+            background: #4ade80;
+            margin-left: 2px;
+            animation: blink 1s step-end infinite;
+            vertical-align: text-bottom;
+        }
+        @keyframes blink {
+            0%, 50% { opacity: 1; }
+            51%, 100% { opacity: 0; }
+        }
+
+        /* Glow button */
+        .glow-btn {
+            position: relative;
+            overflow: hidden;
+            transition: all 0.3s ease;
+        }
+        .glow-btn::before {
+            content: '';
+            position: absolute;
+            inset: -2px;
+            background: linear-gradient(135deg, #4ade80, #60a5fa, #4ade80);
+            border-radius: inherit;
+            opacity: 0;
+            transition: opacity 0.3s ease;
+            z-index: -1;
+            filter: blur(8px);
+        }
+        .glow-btn:hover::before {
+            opacity: 0.6;
+        }
+
+        /* Feature card */
+        .feature-card {
+            transition: all 0.3s ease;
+        }
+        .feature-card:hover {
+            transform: translateY(-4px);
+            border-color: #4ade80;
+            box-shadow: 0 20px 40px -20px rgba(74, 222, 128, 0.2);
+        }
+        .feature-card:hover .feature-icon {
+            transform: scale(1.1) rotate(5deg);
+            color: #4ade80;
+        }
+        .feature-icon {
+            transition: all 0.3s ease;
+        }
+
+        /* Reindeer card */
+        .reindeer-card {
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+        .reindeer-card:hover {
+            transform: translateY(-8px) scale(1.02);
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
+        }
+        .reindeer-card::before {
+            content: '';
+            position: absolute;
+            inset: 0;
+            border-radius: inherit;
+            padding: 1px;
+            background: linear-gradient(135deg, transparent 0%, rgba(74, 222, 128, 0.3) 50%, transparent 100%);
+            -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+            mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+            -webkit-mask-composite: xor;
+            mask-composite: exclude;
+            opacity: 0;
+            transition: opacity 0.3s ease;
+        }
+        .reindeer-card:hover::before {
+            opacity: 1;
+        }
+
+        /* IDE mockup */
+        .ide-window {
+            background: #151a21;
+            border: 1px solid #2a3544;
+            border-radius: 12px;
+            overflow: hidden;
+            box-shadow: 0 25px 80px -20px rgba(0, 0, 0, 0.6);
+        }
+        .ide-titlebar {
+            background: #1c232d;
+            border-bottom: 1px solid #2a3544;
+            padding: 12px 16px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .ide-dot {
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+        }
+        .ide-toolbar {
+            background: #151a21;
+            border-bottom: 1px solid #1e2736;
+            padding: 8px 12px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .ide-btn {
+            padding: 6px 12px;
+            border-radius: 6px;
+            font-size: 12px;
+            font-weight: 500;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+        .ide-editor {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 13px;
+            line-height: 1.6;
+            padding: 16px;
+            background: #0f1419;
+        }
+        .ide-output {
+            background: #0f1419;
+            border-top: 1px solid #2a3544;
+            padding: 16px;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 12px;
+        }
+
+        /* Code syntax colors */
+        .code-keyword { color: #c792ea; }
+        .code-function { color: #82aaff; }
+        .code-string { color: #c3e88d; }
+        .code-number { color: #f78c6c; }
+        .code-comment { color: #5c6b7d; font-style: italic; }
+        .code-operator { color: #89ddff; }
+        .code-variable { color: #e8eef4; }
+
+        /* Animated typing for IDE demos */
+        .type-line {
+            overflow: hidden;
+            white-space: nowrap;
+            animation: typing 0.8s steps(40) forwards;
+            width: 0;
+        }
+        @keyframes typing {
+            to { width: 100%; }
+        }
+
+        /* Staggered typing */
+        .demo-1 .type-line:nth-child(1) { animation-delay: 0.5s; }
+        .demo-1 .type-line:nth-child(2) { animation-delay: 1.3s; }
+        .demo-1 .type-line:nth-child(3) { animation-delay: 2.1s; }
+        .demo-1 .type-line:nth-child(4) { animation-delay: 2.9s; }
+        .demo-1 .type-line:nth-child(5) { animation-delay: 3.7s; }
+        .demo-1 .type-line:nth-child(6) { animation-delay: 4.5s; }
+        .demo-1 .type-line:nth-child(7) { animation-delay: 5.3s; }
+
+        /* Output animation */
+        .output-result {
+            opacity: 0;
+            animation: fadeSlideUp 0.4s ease forwards;
+        }
+        .demo-1 .output-result:nth-child(1) { animation-delay: 6.5s; }
+        .demo-1 .output-result:nth-child(2) { animation-delay: 8s; }
+
+        @keyframes fadeSlideUp {
+            from {
+                opacity: 0;
+                transform: translateY(10px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        /* Computing dots */
+        .computing-dots {
+            display: inline-flex;
+            gap: 3px;
+            opacity: 0;
+            animation: fadeIn 0.3s ease forwards, fadeOut 0.3s ease forwards;
+        }
+        .demo-1 .computing-dots.part1 {
+            animation-delay: 6s, 6.4s;
+        }
+        .demo-1 .computing-dots.part2 {
+            animation-delay: 7.5s, 7.9s;
+        }
+        .computing-dot {
+            width: 4px;
+            height: 4px;
+            border-radius: 50%;
+            background: #60a5fa;
+            animation: bounce 0.6s ease-in-out infinite;
+        }
+        .computing-dot:nth-child(2) { animation-delay: 0.15s; }
+        .computing-dot:nth-child(3) { animation-delay: 0.3s; }
+
+        @keyframes bounce {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-4px); }
+        }
+
+        @keyframes fadeIn {
+            to { opacity: 1; }
+        }
+        @keyframes fadeOut {
+            to { opacity: 0; }
+        }
+
+        /* Demo 2 - Multi comparison */
+        .demo-2 .comparison-bar {
+            height: 24px;
+            border-radius: 4px;
+            background: linear-gradient(90deg, #4ade80 0%, #22c55e 100%);
+            width: 0;
+            animation: growBar 1s ease forwards;
+        }
+        .demo-2 .comparison-bar.bar-1 { animation-delay: 1s; --target-width: 85%; }
+        .demo-2 .comparison-bar.bar-2 { animation-delay: 1.3s; --target-width: 72%; background: linear-gradient(90deg, #60a5fa 0%, #3b82f6 100%); }
+        .demo-2 .comparison-bar.bar-3 { animation-delay: 1.6s; --target-width: 95%; background: linear-gradient(90deg, #a78bfa 0%, #8b5cf6 100%); }
+
+        @keyframes growBar {
+            to { width: var(--target-width); }
+        }
+
+        .demo-2 .time-label {
+            opacity: 0;
+            animation: fadeIn 0.3s ease forwards;
+        }
+        .demo-2 .time-label:nth-of-type(1) { animation-delay: 2s; }
+        .demo-2 .time-label:nth-of-type(2) { animation-delay: 2.3s; }
+        .demo-2 .time-label:nth-of-type(3) { animation-delay: 2.6s; }
+
+        /* Demo 3 - AoC panel slide */
+        .demo-3 .aoc-panel {
+            transform: translateX(100%);
+            animation: slideIn 0.5s ease forwards;
+            animation-delay: 2s;
+        }
+        @keyframes slideIn {
+            to { transform: translateX(0); }
+        }
+
+        .demo-3 .puzzle-line {
+            opacity: 0;
+            animation: fadeSlideUp 0.3s ease forwards;
+        }
+        .demo-3 .puzzle-line:nth-child(1) { animation-delay: 2.5s; }
+        .demo-3 .puzzle-line:nth-child(2) { animation-delay: 2.7s; }
+        .demo-3 .puzzle-line:nth-child(3) { animation-delay: 2.9s; }
+        .demo-3 .puzzle-line:nth-child(4) { animation-delay: 3.1s; }
+        .demo-3 .puzzle-line:nth-child(5) { animation-delay: 3.3s; }
+
+        /* Scroll animations */
+        .reveal {
+            opacity: 0;
+            transform: translateY(30px);
+            transition: all 0.8s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+        .reveal.visible {
+            opacity: 1;
+            transform: translateY(0);
+        }
+
+        /* Staggered children */
+        .stagger-children > * {
+            opacity: 0;
+            transform: translateY(20px);
+            transition: all 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+        .stagger-children.visible > *:nth-child(1) { transition-delay: 0.1s; opacity: 1; transform: translateY(0); }
+        .stagger-children.visible > *:nth-child(2) { transition-delay: 0.2s; opacity: 1; transform: translateY(0); }
+        .stagger-children.visible > *:nth-child(3) { transition-delay: 0.3s; opacity: 1; transform: translateY(0); }
+        .stagger-children.visible > *:nth-child(4) { transition-delay: 0.4s; opacity: 1; transform: translateY(0); }
+        .stagger-children.visible > *:nth-child(5) { transition-delay: 0.5s; opacity: 1; transform: translateY(0); }
+        .stagger-children.visible > *:nth-child(6) { transition-delay: 0.6s; opacity: 1; transform: translateY(0); }
+
+        /* Copy button */
+        .copy-btn {
+            transition: all 0.2s ease;
+        }
+        .copy-btn:hover {
+            background: #242d3a;
+        }
+        .copy-btn.copied {
+            color: #4ade80;
+        }
+
+        /* Pulse ring */
+        .pulse-ring {
+            position: absolute;
+            inset: -4px;
+            border: 2px solid #4ade80;
+            border-radius: inherit;
+            opacity: 0;
+            animation: pulseRing 2s ease-out infinite;
+        }
+        @keyframes pulseRing {
+            0% { transform: scale(1); opacity: 0.5; }
+            100% { transform: scale(1.1); opacity: 0; }
+        }
+
+        /* Navigation */
+        .nav-link {
+            position: relative;
+            transition: color 0.2s ease;
+        }
+        .nav-link::after {
+            content: '';
+            position: absolute;
+            bottom: -4px;
+            left: 0;
+            width: 0;
+            height: 2px;
+            background: #4ade80;
+            transition: width 0.3s ease;
+        }
+        .nav-link:hover::after {
+            width: 100%;
+        }
+
+        /* Hero code preview float */
+        .hero-code {
+            animation: heroFloat 6s ease-in-out infinite;
+        }
+        @keyframes heroFloat {
+            0%, 100% { transform: translateY(0) rotate(-1deg); }
+            50% { transform: translateY(-15px) rotate(1deg); }
+        }
+
+        /* Gradient border */
+        .gradient-border {
+            position: relative;
+        }
+        .gradient-border::before {
+            content: '';
+            position: absolute;
+            inset: 0;
+            border-radius: inherit;
+            padding: 1px;
+            background: linear-gradient(135deg, #4ade80 0%, #60a5fa 50%, #a78bfa 100%);
+            -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+            mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+            -webkit-mask-composite: xor;
+            mask-composite: exclude;
+        }
+
+        /* Demo restart button */
+        .demo-restart {
+            opacity: 0;
+            transition: opacity 0.3s ease;
+        }
+        .demo-container:hover .demo-restart {
+            opacity: 1;
+        }
+    </style>
+</head>
+<body class="antialiased">
+    <!-- Navigation -->
+    <nav class="fixed top-0 left-0 right-0 z-50 bg-bg/80 backdrop-blur-xl border-b border-border-subtle">
+        <div class="max-w-7xl mx-auto px-6 py-4 flex items-center justify-between">
+            <a href="#" class="flex items-center gap-3 group">
+                <img src="logo.png" alt="santa-lang Workbench" class="w-8 h-8 transition-transform group-hover:scale-110">
+                <span class="font-bold text-lg text-txt-primary">santa-lang <span class="text-txt-secondary font-normal">Workbench</span></span>
+            </a>
+            <div class="hidden md:flex items-center gap-8">
+                <a href="#features" class="nav-link text-txt-secondary hover:text-txt-primary text-sm font-medium">Features</a>
+                <a href="#demos" class="nav-link text-txt-secondary hover:text-txt-primary text-sm font-medium">Demos</a>
+                <a href="#reindeer" class="nav-link text-txt-secondary hover:text-txt-primary text-sm font-medium">Reindeer</a>
+                <a href="#install" class="nav-link text-txt-secondary hover:text-txt-primary text-sm font-medium">Install</a>
+            </div>
+            <div class="flex items-center gap-4">
+                <a href="https://github.com/eddmann/santa-lang-workbench" target="_blank" rel="noopener" class="text-txt-muted hover:text-txt-primary transition-colors">
+                    <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 24 24"><path d="M12 0c-6.626 0-12 5.373-12 12 0 5.302 3.438 9.8 8.207 11.387.599.111.793-.261.793-.577v-2.234c-3.338.726-4.033-1.416-4.033-1.416-.546-1.387-1.333-1.756-1.333-1.756-1.089-.745.083-.729.083-.729 1.205.084 1.839 1.237 1.839 1.237 1.07 1.834 2.807 1.304 3.492.997.107-.775.418-1.305.762-1.604-2.665-.305-5.467-1.334-5.467-5.931 0-1.311.469-2.381 1.236-3.221-.124-.303-.535-1.524.117-3.176 0 0 1.008-.322 3.301 1.23.957-.266 1.983-.399 3.003-.404 1.02.005 2.047.138 3.006.404 2.291-1.552 3.297-1.23 3.297-1.23.653 1.653.242 2.874.118 3.176.77.84 1.235 1.911 1.235 3.221 0 4.609-2.807 5.624-5.479 5.921.43.372.823 1.102.823 2.222v3.293c0 .319.192.694.801.576 4.765-1.589 8.199-6.086 8.199-11.386 0-6.627-5.373-12-12-12z"/></svg>
+                </a>
+                <a href="https://github.com/eddmann/santa-lang-workbench/releases" class="glow-btn bg-accent text-bg font-semibold text-sm px-4 py-2 rounded-lg hover:bg-accent-hover transition-colors">
+                    Download
+                </a>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Hero -->
+    <section class="relative min-h-screen flex items-center justify-center overflow-hidden pt-20">
+        <!-- Aurora background -->
+        <div class="absolute inset-0 overflow-hidden pointer-events-none">
+            <div class="aurora-orb aurora-orb-1"></div>
+            <div class="aurora-orb aurora-orb-2"></div>
+            <div class="aurora-orb aurora-orb-3"></div>
+        </div>
+
+        <div class="relative z-10 max-w-7xl mx-auto px-6 py-20 grid lg:grid-cols-2 gap-16 items-center">
+            <!-- Left: Text content -->
+            <div class="text-center lg:text-left">
+                <div class="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-bg-elevated border border-border mb-8">
+                    <span class="w-2 h-2 rounded-full bg-accent animate-pulse"></span>
+                    <span class="text-sm text-txt-secondary">Built with Tauri 2.0 + React 19</span>
+                </div>
+
+                <h1 class="text-5xl md:text-6xl lg:text-7xl font-extrabold leading-tight mb-6">
+                    <span class="gradient-text">santa-lang</span><br>
+                    <span class="text-txt-primary">Workbench</span>
+                </h1>
+
+                <p class="text-xl text-txt-secondary mb-2 max-w-xl mx-auto lg:mx-0">
+                    A cross-platform desktop IDE for santa-lang
+                </p>
+                <p class="text-xl text-txt-muted mb-8 max-w-xl mx-auto lg:mx-0 h-8">
+                    <span id="typed-text" class="text-accent"></span><span class="typing-cursor"></span>
+                </p>
+
+                <div class="flex flex-col sm:flex-row gap-4 justify-center lg:justify-start">
+                    <a href="https://github.com/eddmann/santa-lang-workbench/releases" class="relative glow-btn inline-flex items-center justify-center gap-2 bg-accent text-bg font-bold px-8 py-4 rounded-xl hover:bg-accent-hover transition-all text-lg">
+                        <div class="pulse-ring rounded-xl"></div>
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/></svg>
+                        Download Now
+                    </a>
+                    <a href="https://github.com/eddmann/santa-lang-workbench" target="_blank" rel="noopener" class="inline-flex items-center justify-center gap-2 bg-bg-elevated border border-border text-txt-primary font-semibold px-8 py-4 rounded-xl hover:bg-bg-hover hover:border-txt-muted transition-all text-lg">
+                        <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 24 24"><path d="M12 0c-6.626 0-12 5.373-12 12 0 5.302 3.438 9.8 8.207 11.387.599.111.793-.261.793-.577v-2.234c-3.338.726-4.033-1.416-4.033-1.416-.546-1.387-1.333-1.756-1.333-1.756-1.089-.745.083-.729.083-.729 1.205.084 1.839 1.237 1.839 1.237 1.07 1.834 2.807 1.304 3.492.997.107-.775.418-1.305.762-1.604-2.665-.305-5.467-1.334-5.467-5.931 0-1.311.469-2.381 1.236-3.221-.124-.303-.535-1.524.117-3.176 0 0 1.008-.322 3.301 1.23.957-.266 1.983-.399 3.003-.404 1.02.005 2.047.138 3.006.404 2.291-1.552 3.297-1.23 3.297-1.23.653 1.653.242 2.874.118 3.176.77.84 1.235 1.911 1.235 3.221 0 4.609-2.807 5.624-5.479 5.921.43.372.823 1.102.823 2.222v3.293c0 .319.192.694.801.576 4.765-1.589 8.199-6.086 8.199-11.386 0-6.627-5.373-12-12-12z"/></svg>
+                        View on GitHub
+                    </a>
+                </div>
+            </div>
+
+            <!-- Right: Floating code preview -->
+            <div class="hero-code relative">
+                <div class="ide-window max-w-lg mx-auto">
+                    <div class="ide-titlebar">
+                        <div class="ide-dot bg-[#ff5f57]"></div>
+                        <div class="ide-dot bg-[#febc2e]"></div>
+                        <div class="ide-dot bg-[#28c840]"></div>
+                        <span class="ml-4 text-xs text-txt-muted font-mono">day01.santa</span>
+                    </div>
+                    <div class="ide-editor text-sm leading-relaxed">
+                        <div><span class="code-keyword">let</span> <span class="code-variable">input</span> <span class="code-operator">=</span> <span class="code-function">read</span>(<span class="code-string">"aoc://2023/1"</span>);</div>
+                        <div class="mt-2"><span class="code-keyword">let</span> <span class="code-variable">solve</span> <span class="code-operator">=</span> |<span class="code-variable">calibrations</span>| {</div>
+                        <div class="pl-4">  calibrations</div>
+                        <div class="pl-4">    <span class="code-operator">|></span> <span class="code-function">lines</span></div>
+                        <div class="pl-4">    <span class="code-operator">|></span> <span class="code-function">map</span>(<span class="code-function">ints</span>)</div>
+                        <div class="pl-4">    <span class="code-operator">|></span> <span class="code-function">sum</span></div>
+                        <div>};</div>
+                        <div class="mt-2"><span class="code-function">solve</span>(<span class="code-variable">input</span>)</div>
+                    </div>
+                </div>
+
+                <!-- Floating badge -->
+                <div class="absolute -bottom-4 -right-4 bg-bg-elevated border border-border rounded-lg px-4 py-2 shadow-xl">
+                    <div class="flex items-center gap-2">
+                        <div class="w-2 h-2 rounded-full bg-accent"></div>
+                        <span class="text-xs font-mono text-txt-secondary">Running on Comet v1.2.0</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Scroll indicator -->
+        <div class="absolute bottom-8 left-1/2 -translate-x-1/2 animate-bounce">
+            <svg class="w-6 h-6 text-txt-muted" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 14l-7 7m0 0l-7-7m7 7V3"/>
+            </svg>
+        </div>
+    </section>
+
+    <!-- Features -->
+    <section id="features" class="py-32 relative">
+        <div class="max-w-7xl mx-auto px-6">
+            <div class="text-center mb-20 reveal">
+                <span class="text-accent font-semibold text-sm uppercase tracking-wider">Features</span>
+                <h2 class="text-4xl md:text-5xl font-bold mt-4 text-txt-primary">Everything you need for AoC</h2>
+                <p class="text-txt-secondary mt-4 max-w-2xl mx-auto">A thoughtfully designed IDE that streamlines your Advent of Code workflow with powerful features.</p>
+            </div>
+
+            <div class="grid md:grid-cols-2 lg:grid-cols-3 gap-6 stagger-children">
+                <!-- Feature 1 -->
+                <div class="feature-card bg-bg-surface border border-border rounded-2xl p-8">
+                    <div class="feature-icon w-12 h-12 rounded-xl bg-accent/10 flex items-center justify-center mb-6">
+                        <svg class="w-6 h-6 text-accent" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z"/>
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                        </svg>
+                    </div>
+                    <h3 class="text-xl font-bold text-txt-primary mb-3">Run Solutions</h3>
+                    <p class="text-txt-secondary">Execute santa-lang code with real-time streaming output. Watch your solution progress as each part runs.</p>
+                </div>
+
+                <!-- Feature 2 -->
+                <div class="feature-card bg-bg-surface border border-border rounded-2xl p-8">
+                    <div class="feature-icon w-12 h-12 rounded-xl bg-info/10 flex items-center justify-center mb-6">
+                        <svg class="w-6 h-6 text-info" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"/>
+                        </svg>
+                    </div>
+                    <h3 class="text-xl font-bold text-txt-primary mb-3">Multiple Reindeer</h3>
+                    <p class="text-txt-secondary">Download and manage 5 backend implementations. Switch between interpreters, VMs, and compilers instantly.</p>
+                </div>
+
+                <!-- Feature 3 -->
+                <div class="feature-card bg-bg-surface border border-border rounded-2xl p-8">
+                    <div class="feature-icon w-12 h-12 rounded-xl bg-purple-500/10 flex items-center justify-center mb-6">
+                        <svg class="w-6 h-6 text-purple-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11.049 2.927c.3-.921 1.603-.921 1.902 0l1.519 4.674a1 1 0 00.95.69h4.915c.969 0 1.371 1.24.588 1.81l-3.976 2.888a1 1 0 00-.363 1.118l1.518 4.674c.3.922-.755 1.688-1.538 1.118l-3.976-2.888a1 1 0 00-1.176 0l-3.976 2.888c-.783.57-1.838-.197-1.538-1.118l1.518-4.674a1 1 0 00-.363-1.118l-3.976-2.888c-.784-.57-.38-1.81.588-1.81h4.914a1 1 0 00.951-.69l1.519-4.674z"/>
+                        </svg>
+                    </div>
+                    <h3 class="text-xl font-bold text-txt-primary mb-3">AoC Integration</h3>
+                    <p class="text-txt-secondary">Auto-detects <code class="text-accent text-sm bg-bg-elevated px-1.5 py-0.5 rounded">aoc://</code> patterns and fetches puzzle descriptions and inputs automatically.</p>
+                </div>
+
+                <!-- Feature 4 -->
+                <div class="feature-card bg-bg-surface border border-border rounded-2xl p-8">
+                    <div class="feature-icon w-12 h-12 rounded-xl bg-orange-500/10 flex items-center justify-center mb-6">
+                        <svg class="w-6 h-6 text-orange-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/>
+                        </svg>
+                    </div>
+                    <h3 class="text-xl font-bold text-txt-primary mb-3">Comparative Testing</h3>
+                    <p class="text-txt-secondary">Run the same code on multiple reindeer simultaneously. Compare execution times with performance charts.</p>
+                </div>
+
+                <!-- Feature 5 -->
+                <div class="feature-card bg-bg-surface border border-border rounded-2xl p-8">
+                    <div class="feature-icon w-12 h-12 rounded-xl bg-cyan-500/10 flex items-center justify-center mb-6">
+                        <svg class="w-6 h-6 text-cyan-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 20l4-16m4 4l4 4-4 4M6 16l-4-4 4-4"/>
+                        </svg>
+                    </div>
+                    <h3 class="text-xl font-bold text-txt-primary mb-3">Code Formatting</h3>
+                    <p class="text-txt-secondary">Built-in formatting via Tinsel. Keep your santa-lang code clean and consistent with one keystroke.</p>
+                </div>
+
+                <!-- Feature 6 -->
+                <div class="feature-card bg-bg-surface border border-border rounded-2xl p-8">
+                    <div class="feature-icon w-12 h-12 rounded-xl bg-pink-500/10 flex items-center justify-center mb-6">
+                        <svg class="w-6 h-6 text-pink-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.75 17L9 20l-1 1h8l-1-1-.75-3M3 13h18M5 17h14a2 2 0 002-2V5a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"/>
+                        </svg>
+                    </div>
+                    <h3 class="text-xl font-bold text-txt-primary mb-3">Modern Editor</h3>
+                    <p class="text-txt-secondary">Monaco editor with santa-lang syntax highlighting, multiple tabs, and beautiful dark themes.</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Interactive Demos -->
+    <section id="demos" class="py-32 bg-bg-surface relative overflow-hidden">
+        <div class="absolute inset-0 opacity-30">
+            <div class="absolute top-0 left-1/4 w-96 h-96 bg-accent/5 rounded-full filter blur-3xl"></div>
+            <div class="absolute bottom-0 right-1/4 w-96 h-96 bg-info/5 rounded-full filter blur-3xl"></div>
+        </div>
+
+        <div class="max-w-7xl mx-auto px-6 relative">
+            <div class="text-center mb-20 reveal">
+                <span class="text-accent font-semibold text-sm uppercase tracking-wider">Interactive Demos</span>
+                <h2 class="text-4xl md:text-5xl font-bold mt-4 text-txt-primary">See it in action</h2>
+                <p class="text-txt-secondary mt-4 max-w-2xl mx-auto">Watch the Workbench handle real Advent of Code workflows with these animated demonstrations.</p>
+            </div>
+
+            <!-- Demo 1: Code Execution -->
+            <div class="mb-24 reveal">
+                <div class="flex flex-col lg:flex-row items-center gap-12">
+                    <div class="lg:w-1/3">
+                        <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-accent/10 border border-accent/20 mb-4">
+                            <span class="text-accent text-sm font-medium">Demo 1</span>
+                        </div>
+                        <h3 class="text-2xl font-bold text-txt-primary mb-4">Code Execution Flow</h3>
+                        <p class="text-txt-secondary mb-6">Write your solution, hit Run, and watch results stream in real-time. The output panel shows each part computing with live progress indicators.</p>
+                        <ul class="space-y-3 text-txt-muted text-sm">
+                            <li class="flex items-center gap-2">
+                                <svg class="w-4 h-4 text-accent" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"/></svg>
+                                Real-time streaming output
+                            </li>
+                            <li class="flex items-center gap-2">
+                                <svg class="w-4 h-4 text-accent" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"/></svg>
+                                Execution time tracking
+                            </li>
+                            <li class="flex items-center gap-2">
+                                <svg class="w-4 h-4 text-accent" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"/></svg>
+                                Copy results instantly
+                            </li>
+                        </ul>
+                    </div>
+                    <div class="lg:w-2/3 demo-container relative">
+                        <div class="rounded-xl overflow-hidden shadow-2xl demo-1" id="demo1">
+                            <!-- Editor Tabs - exact h-9 styling -->
+                            <div class="flex items-end h-9 bg-[#151a21] border-b border-[#1e2736]">
+                                <div class="relative flex items-center gap-2 h-[34px] px-3 bg-[#0f1419] text-[#e8eef4]">
+                                    <div class="absolute top-0 left-0 right-0 h-[2px] bg-[#4ade80]"></div>
+                                    <svg class="w-4 h-4 text-[#4ade80]" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M4 4a2 2 0 012-2h4.586A2 2 0 0112 2.586L15.414 6A2 2 0 0116 7.414V16a2 2 0 01-2 2H6a2 2 0 01-2-2V4z" clip-rule="evenodd"/></svg>
+                                    <span class="text-[13px] font-medium">day01.santa</span>
+                                </div>
+                                <button class="flex items-center justify-center w-8 h-[34px] text-[#5c6b7d] hover:text-[#9ba8b9] hover:bg-[#1c232d]">
+                                    <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M10 3a1 1 0 011 1v5h5a1 1 0 110 2h-5v5a1 1 0 11-2 0v-5H4a1 1 0 110-2h5V4a1 1 0 011-1z" clip-rule="evenodd"/></svg>
+                                </button>
+                                <div class="flex-1"></div>
+                            </div>
+
+                            <!-- Toolbar - exact h-12 px-3 styling -->
+                            <div class="flex items-center justify-between h-12 px-3 bg-[#151a21] border-b border-[#1e2736]">
+                                <div class="flex items-center gap-1.5">
+                                    <!-- Run Button - exact styling -->
+                                    <button class="relative flex items-center gap-2 h-8 px-4 rounded-md font-medium text-sm bg-[#4ade80] text-[#0f1419] shadow-[inset_0_1px_0_rgba(255,255,255,0.2),0_1px_2px_rgba(0,0,0,0.2),0_0_20px_rgba(74,222,128,0.2)]">
+                                        <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM9.555 7.168A1 1 0 008 8v4a1 1 0 001.555.832l3-2a1 1 0 000-1.664l-3-2z" clip-rule="evenodd"/></svg>
+                                        <span>Run</span>
+                                        <div class="absolute inset-0 rounded-md bg-gradient-to-b from-white/15 to-transparent pointer-events-none"></div>
+                                    </button>
+                                    <!-- Test Button -->
+                                    <button class="flex items-center gap-2 h-8 px-3.5 rounded-md font-medium text-sm bg-[#1c232d] text-[#9ba8b9] border border-[#2a3544]">
+                                        <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M7 2a1 1 0 00-.707 1.707L7 4.414v3.758a1 1 0 01-.293.707l-4 4C.817 14.769 2.156 18 4.828 18h10.343c2.673 0 4.012-3.231 2.122-5.121l-4-4A1 1 0 0113 8.172V4.414l.707-.707A1 1 0 0013 2H7zm2 6.172V4h2v4.172a3 3 0 00.879 2.12l1.027 1.028a4 4 0 00-2.171.102l-.47.156a4 4 0 01-2.53 0l-.563-.187a1.993 1.993 0 00-.114-.035l1.063-1.063A3 3 0 009 8.172z" clip-rule="evenodd"/></svg>
+                                        <span>Test</span>
+                                    </button>
+                                    <!-- Divider -->
+                                    <div class="w-px h-5 bg-[#2a3544] mx-2"></div>
+                                    <!-- Multi-select toggle (inactive) -->
+                                    <button class="flex items-center justify-center w-8 h-8 rounded-md text-[#5c6b7d] hover:text-[#e8eef4] hover:bg-[#1c232d]">
+                                        <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20"><path d="M5 3a2 2 0 00-2 2v2a2 2 0 002 2h2a2 2 0 002-2V5a2 2 0 00-2-2H5zM5 11a2 2 0 00-2 2v2a2 2 0 002 2h2a2 2 0 002-2v-2a2 2 0 00-2-2H5zM11 5a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V5zM11 13a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z"/></svg>
+                                    </button>
+                                    <!-- Reindeer selector -->
+                                    <div class="relative">
+                                        <div class="flex items-center h-8 pl-3 pr-7 rounded-md text-sm font-medium bg-[#1c232d] text-[#9ba8b9] border border-[#2a3544]">
+                                            Comet
+                                        </div>
+                                        <svg class="absolute right-1.5 top-1/2 -translate-y-1/2 w-4 h-4 text-[#5c6b7d]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
+                                    </div>
+                                    <!-- Version selector -->
+                                    <div class="relative">
+                                        <div class="flex items-center h-8 pl-2.5 pr-6 rounded-md text-sm font-mono bg-[#1c232d] text-[#5c6b7d] border border-[#2a3544]">
+                                            v1.2.0
+                                        </div>
+                                        <svg class="absolute right-1 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-[#5c6b7d]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
+                                    </div>
+                                </div>
+                                <div class="flex items-center gap-1">
+                                    <button class="flex items-center gap-1.5 h-8 px-3 rounded-md text-sm text-[#5c6b7d] hover:text-[#e8eef4] hover:bg-[#1c232d]">
+                                        <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M2 6a2 2 0 012-2h4l2 2h4a2 2 0 012 2v1H8a3 3 0 00-3 3v1.5a1.5 1.5 0 01-3 0V6z" clip-rule="evenodd"/><path d="M6 12a2 2 0 012-2h8a2 2 0 012 2v2a2 2 0 01-2 2H2h2a2 2 0 002-2v-2z"/></svg>
+                                        <span>Open</span>
+                                    </button>
+                                    <button class="flex items-center gap-2 h-8 px-3 rounded-md text-sm text-[#5c6b7d] hover:text-[#e8eef4] hover:bg-[#1c232d]">
+                                        <span>Save</span>
+                                        <kbd class="inline-flex items-center h-5 px-1.5 rounded text-[10px] font-mono font-medium bg-[#0f1419] text-[#5c6b7d] border border-[#2a3544]">⌘S</kbd>
+                                    </button>
+                                    <div class="w-px h-5 bg-[#2a3544] mx-1"></div>
+                                    <button class="flex items-center justify-center w-8 h-8 rounded-md text-[#5c6b7d] hover:text-[#e8eef4] hover:bg-[#1c232d]">
+                                        <svg class="w-[18px] h-[18px]" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M11.49 3.17c-.38-1.56-2.6-1.56-2.98 0a1.532 1.532 0 01-2.286.948c-1.372-.836-2.942.734-2.106 2.106.54.886.061 2.042-.947 2.287-1.561.379-1.561 2.6 0 2.978a1.532 1.532 0 01.947 2.287c-.836 1.372.734 2.942 2.106 2.106a1.532 1.532 0 012.287.947c.379 1.561 2.6 1.561 2.978 0a1.533 1.533 0 012.287-.947c1.372.836 2.942-.734 2.106-2.106a1.533 1.533 0 01.947-2.287c1.561-.379 1.561-2.6 0-2.978a1.532 1.532 0 01-.947-2.287c.836-1.372-.734-2.942-2.106-2.106a1.532 1.532 0 01-2.287-.947zM10 13a3 3 0 100-6 3 3 0 000 6z" clip-rule="evenodd"/></svg>
+                                    </button>
+                                </div>
+                            </div>
+
+                            <!-- Main content area -->
+                            <div class="grid grid-cols-2 bg-[#0f1419]">
+                                <!-- Editor -->
+                                <div class="border-r border-[#2a3544] p-4 font-mono text-[13px] leading-relaxed min-h-[260px]">
+                                    <div class="type-line"><span class="code-variable">input</span>: <span class="code-function">read</span>(<span class="code-string">"aoc://2015/1"</span>)</div>
+                                    <div class="type-line mt-3"><span class="code-variable">part_one</span>: {</div>
+                                    <div class="type-line pl-4">  input <span class="code-operator">|></span> <span class="code-function">fold</span>(<span class="code-number">0</span>) |floor, direction| {</div>
+                                    <div class="type-line pl-4">    <span class="code-keyword">if</span> direction <span class="code-operator">==</span> <span class="code-string">"("</span> { floor <span class="code-operator">+</span> <span class="code-number">1</span> } <span class="code-keyword">else</span> { floor <span class="code-operator">-</span> <span class="code-number">1</span> }</div>
+                                    <div class="type-line pl-4">  }</div>
+                                    <div class="type-line">}</div>
+                                    <div class="type-line mt-3"><span class="code-variable">part_two</span>: {</div>
+                                    <div class="type-line pl-4">  <span class="code-function">zip</span>(<span class="code-number">1</span>.., input) <span class="code-operator">|></span> <span class="code-function">fold</span>(<span class="code-number">0</span>) |floor, [idx, dir]| {</div>
+                                    <div class="type-line pl-4">    <span class="code-keyword">let</span> next <span class="code-operator">=</span> <span class="code-keyword">if</span> dir <span class="code-operator">==</span> <span class="code-string">"("</span> { floor <span class="code-operator">+</span> <span class="code-number">1</span> } <span class="code-keyword">else</span> { floor <span class="code-operator">-</span> <span class="code-number">1</span> }</div>
+                                    <div class="type-line pl-4">    <span class="code-keyword">if</span> next <span class="code-operator">&lt;</span> <span class="code-number">0</span> { <span class="code-keyword">break</span> idx } <span class="code-keyword">else</span> { next }</div>
+                                    <div class="type-line pl-4">  }</div>
+                                    <div class="type-line">}</div>
+                                </div>
+
+                                <!-- Output Panel -->
+                                <div class="flex flex-col bg-[#0f1419]">
+                                    <!-- Output Header - exact styling -->
+                                    <div class="px-4 py-3 bg-[#151a21] border-b border-[#1e2736] flex items-center justify-between">
+                                        <div class="flex items-center gap-2">
+                                            <svg class="w-4 h-4 text-[#5c6b7d]" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M2 5a2 2 0 012-2h12a2 2 0 012 2v10a2 2 0 01-2 2H4a2 2 0 01-2-2V5zm3.293 1.293a1 1 0 011.414 0l3 3a1 1 0 010 1.414l-3 3a1 1 0 01-1.414-1.414L7.586 10 5.293 7.707a1 1 0 010-1.414zM11 12a1 1 0 100 2h3a1 1 0 100-2h-3z" clip-rule="evenodd"/></svg>
+                                            <span class="text-sm font-semibold text-[#9ba8b9]">Output</span>
+                                            <!-- Running indicator -->
+                                            <div class="running-indicator flex items-center gap-2 ml-2">
+                                                <span class="relative flex h-2.5 w-2.5">
+                                                    <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-[#60a5fa] opacity-75"></span>
+                                                    <span class="relative inline-flex rounded-full h-2.5 w-2.5 bg-[#60a5fa]"></span>
+                                                </span>
+                                                <span class="text-xs text-[#60a5fa] font-medium">Executing</span>
+                                            </div>
+                                        </div>
+                                        <span class="text-xs text-[#5c6b7d] font-medium uppercase tracking-wide">Solution</span>
+                                    </div>
+                                    <!-- Output Content - PartResult styling -->
+                                    <div class="flex-1 p-4 space-y-4">
+                                        <!-- Part 1 Result -->
+                                        <div class="output-result flex items-start gap-4 p-4 rounded-lg bg-[#151a21] border border-[#1e2736] hover:border-[#2a3544] transition-colors">
+                                            <div class="flex-shrink-0 mt-0.5">
+                                                <div class="w-6 h-6 rounded-full bg-[rgba(74,222,128,0.15)] flex items-center justify-center">
+                                                    <svg class="w-5 h-5 text-[#4ade80]" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"/></svg>
+                                                </div>
+                                            </div>
+                                            <div class="flex-1 min-w-0">
+                                                <div class="flex items-center justify-between">
+                                                    <span class="text-sm font-semibold text-[#9ba8b9]">Part 1</span>
+                                                    <span class="text-xs font-mono text-[#5c6b7d] bg-[#0f1419] px-2 py-0.5 rounded-full">12ms</span>
+                                                </div>
+                                                <div class="mt-2">
+                                                    <code class="inline-block font-mono text-sm text-[#e8eef4] bg-[#0f1419] px-3 py-1.5 rounded-md border border-[#1e2736] hover:border-[#4ade80] transition-colors">74</code>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <!-- Part 2 Result -->
+                                        <div class="output-result flex items-start gap-4 p-4 rounded-lg bg-[#151a21] border border-[#1e2736] hover:border-[#2a3544] transition-colors">
+                                            <div class="flex-shrink-0 mt-0.5">
+                                                <div class="w-6 h-6 rounded-full bg-[rgba(74,222,128,0.15)] flex items-center justify-center">
+                                                    <svg class="w-5 h-5 text-[#4ade80]" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"/></svg>
+                                                </div>
+                                            </div>
+                                            <div class="flex-1 min-w-0">
+                                                <div class="flex items-center justify-between">
+                                                    <span class="text-sm font-semibold text-[#9ba8b9]">Part 2</span>
+                                                    <span class="text-xs font-mono text-[#5c6b7d] bg-[#0f1419] px-2 py-0.5 rounded-full">8ms</span>
+                                                </div>
+                                                <div class="mt-2">
+                                                    <code class="inline-block font-mono text-sm text-[#e8eef4] bg-[#0f1419] px-3 py-1.5 rounded-md border border-[#1e2736] hover:border-[#4ade80] transition-colors">1795</code>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Status Bar - exact h-6 px-3 styling -->
+                            <div class="flex items-center justify-between h-6 px-3 bg-[#151a21] border-t border-[#1e2736] text-xs select-none">
+                                <div class="flex items-center gap-3">
+                                    <div class="flex items-center gap-1.5">
+                                        <svg class="w-3.5 h-3.5 text-[#3d4a5c]" fill="currentColor" viewBox="0 0 20 20"><path d="M13 7H7v6h6V7z"/><path fill-rule="evenodd" d="M7 2a1 1 0 012 0v1h2V2a1 1 0 112 0v1h2a2 2 0 012 2v2h1a1 1 0 110 2h-1v2h1a1 1 0 110 2h-1v2a2 2 0 01-2 2h-2v1a1 1 0 11-2 0v-1H9v1a1 1 0 11-2 0v-1H5a2 2 0 01-2-2v-2H2a1 1 0 110-2h1V9H2a1 1 0 010-2h1V5a2 2 0 012-2h2V2zM5 5h10v10H5V5z" clip-rule="evenodd"/></svg>
+                                        <span class="text-[#5c6b7d]">Comet <span class="text-[#3d4a5c]">v1.2.0</span></span>
+                                    </div>
+                                    <div class="w-px h-3 bg-[#1e2736]"></div>
+                                    <div class="flex items-center gap-1.5 text-[#4ade80]">
+                                        <svg class="w-3.5 h-3.5" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"/></svg>
+                                        <span>Complete</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <button onclick="restartDemo('demo1')" class="demo-restart absolute top-4 right-4 p-2 rounded-lg bg-bg-elevated border border-border text-txt-muted hover:text-txt-primary transition-colors">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/></svg>
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Demo 2: Multi-Reindeer Comparison -->
+            <div class="mb-24 reveal">
+                <div class="flex flex-col lg:flex-row-reverse items-center gap-12">
+                    <div class="lg:w-1/3">
+                        <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-info/10 border border-info/20 mb-4">
+                            <span class="text-info text-sm font-medium">Demo 2</span>
+                        </div>
+                        <h3 class="text-2xl font-bold text-txt-primary mb-4">Multi-Reindeer Comparison</h3>
+                        <p class="text-txt-secondary mb-6">Toggle multi-select mode to run your solution across multiple backends simultaneously. Compare performance with side-by-side timing charts.</p>
+                        <ul class="space-y-3 text-txt-muted text-sm">
+                            <li class="flex items-center gap-2">
+                                <svg class="w-4 h-4 text-info" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"/></svg>
+                                Parallel execution
+                            </li>
+                            <li class="flex items-center gap-2">
+                                <svg class="w-4 h-4 text-info" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"/></svg>
+                                Performance visualization
+                            </li>
+                            <li class="flex items-center gap-2">
+                                <svg class="w-4 h-4 text-info" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"/></svg>
+                                5 backend options
+                            </li>
+                        </ul>
+                    </div>
+                    <div class="lg:w-2/3 demo-container relative">
+                        <div class="rounded-xl overflow-hidden shadow-2xl demo-2" id="demo2">
+                            <!-- Editor Tabs -->
+                            <div class="flex items-end h-9 bg-[#151a21] border-b border-[#1e2736]">
+                                <div class="relative flex items-center gap-2 h-[34px] px-3 bg-[#0f1419] text-[#e8eef4]">
+                                    <div class="absolute top-0 left-0 right-0 h-[2px] bg-[#4ade80]"></div>
+                                    <svg class="w-4 h-4 text-[#4ade80]" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M4 4a2 2 0 012-2h4.586A2 2 0 0112 2.586L15.414 6A2 2 0 0116 7.414V16a2 2 0 01-2 2H6a2 2 0 01-2-2V4z" clip-rule="evenodd"/></svg>
+                                    <span class="text-[13px] font-medium">benchmark.santa</span>
+                                </div>
+                                <div class="flex-1"></div>
+                            </div>
+
+                            <!-- Toolbar with multi-select active -->
+                            <div class="flex items-center justify-between h-12 px-3 bg-[#151a21] border-b border-[#1e2736]">
+                                <div class="flex items-center gap-1.5">
+                                    <button class="relative flex items-center gap-2 h-8 px-4 rounded-md font-medium text-sm bg-[#4ade80] text-[#0f1419] shadow-[inset_0_1px_0_rgba(255,255,255,0.2),0_1px_2px_rgba(0,0,0,0.2),0_0_20px_rgba(74,222,128,0.2)]">
+                                        <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM9.555 7.168A1 1 0 008 8v4a1 1 0 001.555.832l3-2a1 1 0 000-1.664l-3-2z" clip-rule="evenodd"/></svg>
+                                        <span>Run All</span>
+                                        <div class="absolute inset-0 rounded-md bg-gradient-to-b from-white/15 to-transparent pointer-events-none"></div>
+                                    </button>
+                                    <button class="flex items-center gap-2 h-8 px-3.5 rounded-md font-medium text-sm bg-[#1c232d] text-[#9ba8b9] border border-[#2a3544]">
+                                        <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M7 2a1 1 0 00-.707 1.707L7 4.414v3.758a1 1 0 01-.293.707l-4 4C.817 14.769 2.156 18 4.828 18h10.343c2.673 0 4.012-3.231 2.122-5.121l-4-4A1 1 0 0113 8.172V4.414l.707-.707A1 1 0 0013 2H7zm2 6.172V4h2v4.172a3 3 0 00.879 2.12l1.027 1.028a4 4 0 00-2.171.102l-.47.156a4 4 0 01-2.53 0l-.563-.187a1.993 1.993 0 00-.114-.035l1.063-1.063A3 3 0 009 8.172z" clip-rule="evenodd"/></svg>
+                                        <span>Test All</span>
+                                    </button>
+                                    <div class="w-px h-5 bg-[#2a3544] mx-2"></div>
+                                    <!-- Multi-select toggle (active) -->
+                                    <button class="flex items-center justify-center w-8 h-8 rounded-md bg-[#4ade80] text-[#0f1419]">
+                                        <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20"><path d="M5 3a2 2 0 00-2 2v2a2 2 0 002 2h2a2 2 0 002-2V5a2 2 0 00-2-2H5zM5 11a2 2 0 00-2 2v2a2 2 0 002 2h2a2 2 0 002-2v-2a2 2 0 00-2-2H5zM11 5a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V5zM11 13a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z"/></svg>
+                                    </button>
+                                    <!-- Selected reindeer chips -->
+                                    <div class="flex items-center gap-1.5 ml-1">
+                                        <span class="px-2 py-1 text-xs rounded-md bg-[rgba(74,222,128,0.15)] text-[#4ade80] border border-[rgba(74,222,128,0.3)]">Comet</span>
+                                        <span class="px-2 py-1 text-xs rounded-md bg-[rgba(96,165,250,0.15)] text-[#60a5fa] border border-[rgba(96,165,250,0.3)]">Blitzen</span>
+                                        <span class="px-2 py-1 text-xs rounded-md bg-[rgba(167,139,250,0.15)] text-[#a78bfa] border border-[rgba(167,139,250,0.3)]">Dasher</span>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Split output panels -->
+                            <div class="grid grid-cols-3 bg-[#0f1419] min-h-[280px]">
+                                <!-- Comet output -->
+                                <div class="border-r border-[#2a3544]">
+                                    <div class="px-3 py-2 bg-[#151a21] border-b border-[#1e2736] flex items-center gap-2">
+                                        <svg class="w-4 h-4 text-[#5c6b7d]" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M2 5a2 2 0 012-2h12a2 2 0 012 2v10a2 2 0 01-2 2H4a2 2 0 01-2-2V5zm3.293 1.293a1 1 0 011.414 0l3 3a1 1 0 010 1.414l-3 3a1 1 0 01-1.414-1.414L7.586 10 5.293 7.707a1 1 0 010-1.414zM11 12a1 1 0 100 2h3a1 1 0 100-2h-3z" clip-rule="evenodd"/></svg>
+                                        <span class="text-sm font-semibold text-[#9ba8b9]">Comet</span>
+                                        <span class="text-xs text-[#5c6b7d] font-mono">v1.2.0</span>
+                                    </div>
+                                    <div class="p-3">
+                                        <div class="flex items-start gap-3 p-3 rounded-lg bg-[#151a21] border border-[#1e2736]">
+                                            <div class="w-5 h-5 rounded-full bg-[rgba(74,222,128,0.15)] flex items-center justify-center flex-shrink-0">
+                                                <svg class="w-4 h-4 text-[#4ade80]" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"/></svg>
+                                            </div>
+                                            <div class="flex-1">
+                                                <div class="flex items-center justify-between mb-1">
+                                                    <span class="text-xs font-semibold text-[#9ba8b9]">Part 1</span>
+                                                    <span class="text-[10px] font-mono text-[#4ade80] bg-[#0f1419] px-1.5 py-0.5 rounded">142ms</span>
+                                                </div>
+                                                <code class="text-xs font-mono text-[#e8eef4]">74</code>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                                <!-- Blitzen output -->
+                                <div class="border-r border-[#2a3544]">
+                                    <div class="px-3 py-2 bg-[#151a21] border-b border-[#1e2736] flex items-center gap-2">
+                                        <svg class="w-4 h-4 text-[#5c6b7d]" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M2 5a2 2 0 012-2h12a2 2 0 012 2v10a2 2 0 01-2 2H4a2 2 0 01-2-2V5zm3.293 1.293a1 1 0 011.414 0l3 3a1 1 0 010 1.414l-3 3a1 1 0 01-1.414-1.414L7.586 10 5.293 7.707a1 1 0 010-1.414zM11 12a1 1 0 100 2h3a1 1 0 100-2h-3z" clip-rule="evenodd"/></svg>
+                                        <span class="text-sm font-semibold text-[#9ba8b9]">Blitzen</span>
+                                        <span class="text-xs text-[#5c6b7d] font-mono">v0.9.0</span>
+                                    </div>
+                                    <div class="p-3">
+                                        <div class="flex items-start gap-3 p-3 rounded-lg bg-[#151a21] border border-[#1e2736]">
+                                            <div class="w-5 h-5 rounded-full bg-[rgba(74,222,128,0.15)] flex items-center justify-center flex-shrink-0">
+                                                <svg class="w-4 h-4 text-[#4ade80]" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"/></svg>
+                                            </div>
+                                            <div class="flex-1">
+                                                <div class="flex items-center justify-between mb-1">
+                                                    <span class="text-xs font-semibold text-[#9ba8b9]">Part 1</span>
+                                                    <span class="text-[10px] font-mono text-[#60a5fa] bg-[#0f1419] px-1.5 py-0.5 rounded">98ms</span>
+                                                </div>
+                                                <code class="text-xs font-mono text-[#e8eef4]">74</code>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                                <!-- Dasher output -->
+                                <div>
+                                    <div class="px-3 py-2 bg-[#151a21] border-b border-[#1e2736] flex items-center gap-2">
+                                        <svg class="w-4 h-4 text-[#5c6b7d]" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M2 5a2 2 0 012-2h12a2 2 0 012 2v10a2 2 0 01-2 2H4a2 2 0 01-2-2V5zm3.293 1.293a1 1 0 011.414 0l3 3a1 1 0 010 1.414l-3 3a1 1 0 01-1.414-1.414L7.586 10 5.293 7.707a1 1 0 010-1.414zM11 12a1 1 0 100 2h3a1 1 0 100-2h-3z" clip-rule="evenodd"/></svg>
+                                        <span class="text-sm font-semibold text-[#9ba8b9]">Dasher</span>
+                                        <span class="text-xs text-[#5c6b7d] font-mono">v0.5.0</span>
+                                    </div>
+                                    <div class="p-3">
+                                        <div class="flex items-start gap-3 p-3 rounded-lg bg-[#151a21] border border-[#1e2736]">
+                                            <div class="w-5 h-5 rounded-full bg-[rgba(74,222,128,0.15)] flex items-center justify-center flex-shrink-0">
+                                                <svg class="w-4 h-4 text-[#4ade80]" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"/></svg>
+                                            </div>
+                                            <div class="flex-1">
+                                                <div class="flex items-center justify-between mb-1">
+                                                    <span class="text-xs font-semibold text-[#9ba8b9]">Part 1</span>
+                                                    <span class="text-[10px] font-mono text-[#a78bfa] bg-[#0f1419] px-1.5 py-0.5 rounded">12ms</span>
+                                                </div>
+                                                <code class="text-xs font-mono text-[#e8eef4]">74</code>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Status Bar -->
+                            <div class="flex items-center justify-between h-6 px-3 bg-[#151a21] border-t border-[#1e2736] text-xs select-none">
+                                <div class="flex items-center gap-3">
+                                    <div class="flex items-center gap-1.5">
+                                        <svg class="w-3.5 h-3.5 text-[#4ade80]" fill="currentColor" viewBox="0 0 20 20"><path d="M5 3a2 2 0 00-2 2v2a2 2 0 002 2h2a2 2 0 002-2V5a2 2 0 00-2-2H5zM5 11a2 2 0 00-2 2v2a2 2 0 002 2h2a2 2 0 002-2v-2a2 2 0 00-2-2H5zM11 5a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V5zM11 13a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z"/></svg>
+                                        <span class="text-[#5c6b7d]">3 reindeer selected</span>
+                                    </div>
+                                    <div class="w-px h-3 bg-[#1e2736]"></div>
+                                    <div class="flex items-center gap-1.5 text-[#4ade80]">
+                                        <svg class="w-3.5 h-3.5" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"/></svg>
+                                        <span>Complete (3)</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <button onclick="restartDemo('demo2')" class="demo-restart absolute top-4 right-4 p-2 rounded-lg bg-bg-elevated border border-border text-txt-muted hover:text-txt-primary transition-colors">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/></svg>
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Demo 3: AoC Integration -->
+            <div class="reveal">
+                <div class="flex flex-col lg:flex-row items-center gap-12">
+                    <div class="lg:w-1/3">
+                        <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-purple-500/10 border border-purple-500/20 mb-4">
+                            <span class="text-purple-400 text-sm font-medium">Demo 3</span>
+                        </div>
+                        <h3 class="text-2xl font-bold text-txt-primary mb-4">AoC Integration</h3>
+                        <p class="text-txt-secondary mb-6">Just reference a puzzle with <code class="text-accent text-sm bg-bg-elevated px-1.5 py-0.5 rounded">aoc://</code> and the Workbench automatically fetches the puzzle description and your input.</p>
+                        <ul class="space-y-3 text-txt-muted text-sm">
+                            <li class="flex items-center gap-2">
+                                <svg class="w-4 h-4 text-purple-400" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"/></svg>
+                                Auto-detect puzzle references
+                            </li>
+                            <li class="flex items-center gap-2">
+                                <svg class="w-4 h-4 text-purple-400" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"/></svg>
+                                Fetch puzzle descriptions
+                            </li>
+                            <li class="flex items-center gap-2">
+                                <svg class="w-4 h-4 text-purple-400" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"/></svg>
+                                Session token integration
+                            </li>
+                        </ul>
+                    </div>
+                    <div class="lg:w-2/3 demo-container relative">
+                        <div class="rounded-xl overflow-hidden shadow-2xl demo-3" id="demo3">
+                            <!-- Editor Tabs -->
+                            <div class="flex items-end h-9 bg-[#151a21] border-b border-[#1e2736]">
+                                <div class="relative flex items-center gap-2 h-[34px] px-3 bg-[#0f1419] text-[#e8eef4]">
+                                    <div class="absolute top-0 left-0 right-0 h-[2px] bg-[#4ade80]"></div>
+                                    <svg class="w-4 h-4 text-[#4ade80]" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M4 4a2 2 0 012-2h4.586A2 2 0 0112 2.586L15.414 6A2 2 0 0116 7.414V16a2 2 0 01-2 2H6a2 2 0 01-2-2V4z" clip-rule="evenodd"/></svg>
+                                    <span class="text-[13px] font-medium">day15.santa</span>
+                                </div>
+                                <div class="flex-1"></div>
+                            </div>
+
+                            <!-- Toolbar -->
+                            <div class="flex items-center justify-between h-12 px-3 bg-[#151a21] border-b border-[#1e2736]">
+                                <div class="flex items-center gap-1.5">
+                                    <button class="relative flex items-center gap-2 h-8 px-4 rounded-md font-medium text-sm bg-[#4ade80] text-[#0f1419] shadow-[inset_0_1px_0_rgba(255,255,255,0.2),0_1px_2px_rgba(0,0,0,0.2),0_0_20px_rgba(74,222,128,0.2)]">
+                                        <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM9.555 7.168A1 1 0 008 8v4a1 1 0 001.555.832l3-2a1 1 0 000-1.664l-3-2z" clip-rule="evenodd"/></svg>
+                                        <span>Run</span>
+                                        <div class="absolute inset-0 rounded-md bg-gradient-to-b from-white/15 to-transparent pointer-events-none"></div>
+                                    </button>
+                                    <button class="flex items-center gap-2 h-8 px-3.5 rounded-md font-medium text-sm bg-[#1c232d] text-[#9ba8b9] border border-[#2a3544]">
+                                        <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M7 2a1 1 0 00-.707 1.707L7 4.414v3.758a1 1 0 01-.293.707l-4 4C.817 14.769 2.156 18 4.828 18h10.343c2.673 0 4.012-3.231 2.122-5.121l-4-4A1 1 0 0113 8.172V4.414l.707-.707A1 1 0 0013 2H7zm2 6.172V4h2v4.172a3 3 0 00.879 2.12l1.027 1.028a4 4 0 00-2.171.102l-.47.156a4 4 0 01-2.53 0l-.563-.187a1.993 1.993 0 00-.114-.035l1.063-1.063A3 3 0 009 8.172z" clip-rule="evenodd"/></svg>
+                                        <span>Test</span>
+                                    </button>
+                                    <div class="w-px h-5 bg-[#2a3544] mx-2"></div>
+                                    <div class="relative">
+                                        <div class="flex items-center h-8 pl-3 pr-7 rounded-md text-sm font-medium bg-[#1c232d] text-[#9ba8b9] border border-[#2a3544]">Comet</div>
+                                        <svg class="absolute right-1.5 top-1/2 -translate-y-1/2 w-4 h-4 text-[#5c6b7d]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Main content with AoC panel -->
+                            <div class="grid grid-cols-5 bg-[#0f1419] min-h-[280px]">
+                                <!-- Editor -->
+                                <div class="col-span-3 border-r border-[#2a3544] p-4 font-mono text-[13px] leading-relaxed">
+                                    <div><span class="code-comment">// Advent of Code 2023 - Day 15</span></div>
+                                    <div class="mt-3"><span class="code-keyword">let</span> <span class="code-variable">input</span> <span class="code-operator">=</span> <span class="code-function">read</span>(<span class="code-string">"aoc://2023/15"</span>);</div>
+                                    <div class="mt-4"><span class="code-keyword">let</span> <span class="code-variable">hash</span> <span class="code-operator">=</span> |<span class="code-variable">s</span>| {</div>
+                                    <div class="pl-4">  s <span class="code-operator">|></span> <span class="code-function">fold</span>(<span class="code-number">0</span>) { |<span class="code-variable">acc</span>, <span class="code-variable">c</span>|</div>
+                                    <div class="pl-4">    (acc <span class="code-operator">+</span> <span class="code-function">ord</span>(c)) <span class="code-operator">*</span> <span class="code-number">17</span> <span class="code-operator">%</span> <span class="code-number">256</span></div>
+                                    <div class="pl-4">  }</div>
+                                    <div>};</div>
+                                </div>
+
+                                <!-- AoC Context Panel -->
+                                <div class="col-span-2 bg-[#151a21] flex flex-col">
+                                    <div class="px-4 py-3 bg-[#1c232d] border-b border-[#2a3544] flex items-center gap-2">
+                                        <svg class="w-4 h-4 text-[#a78bfa]" fill="currentColor" viewBox="0 0 20 20"><path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"/></svg>
+                                        <span class="text-sm font-semibold text-[#e8eef4]">Day 15: Lens Library</span>
+                                    </div>
+                                    <div class="flex-1 p-4 text-xs leading-relaxed text-[#9ba8b9] space-y-3 overflow-auto aoc-content">
+                                        <p>The newly-focused parabolic reflector dish is sending all of the collected light to a point on the side of yet another mountain...</p>
+                                        <p>The <em class="text-[#4ade80] font-normal" style="text-shadow: 0 0 8px rgba(74,222,128,0.15)">HASH algorithm</em> is a way to turn any string of characters into a single number in the range 0 to 255.</p>
+                                        <p>To run the HASH algorithm on a string, start with a <code class="text-[#4ade80] bg-[#1c232d] px-1 rounded">current value</code> of <code class="text-[#4ade80] bg-[#1c232d] px-1 rounded">0</code>.</p>
+                                        <p>Then, for each character:</p>
+                                        <ul class="list-disc pl-4 space-y-1 text-[#5c6b7d]">
+                                            <li>Increase by ASCII code</li>
+                                            <li>Multiply by 17</li>
+                                            <li>Remainder after dividing by 256</li>
+                                        </ul>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Status Bar -->
+                            <div class="flex items-center justify-between h-6 px-3 bg-[#151a21] border-t border-[#1e2736] text-xs select-none">
+                                <div class="flex items-center gap-3">
+                                    <div class="flex items-center gap-1.5">
+                                        <svg class="w-3.5 h-3.5 text-[#3d4a5c]" fill="currentColor" viewBox="0 0 20 20"><path d="M13 7H7v6h6V7z"/><path fill-rule="evenodd" d="M7 2a1 1 0 012 0v1h2V2a1 1 0 112 0v1h2a2 2 0 012 2v2h1a1 1 0 110 2h-1v2h1a1 1 0 110 2h-1v2a2 2 0 01-2 2h-2v1a1 1 0 11-2 0v-1H9v1a1 1 0 11-2 0v-1H5a2 2 0 01-2-2v-2H2a1 1 0 110-2h1V9H2a1 1 0 010-2h1V5a2 2 0 012-2h2V2zM5 5h10v10H5V5z" clip-rule="evenodd"/></svg>
+                                        <span class="text-[#5c6b7d]">Comet <span class="text-[#3d4a5c]">v1.2.0</span></span>
+                                    </div>
+                                    <div class="w-px h-3 bg-[#1e2736]"></div>
+                                    <div class="flex items-center gap-1.5 text-[#a78bfa]">
+                                        <svg class="w-3.5 h-3.5" fill="currentColor" viewBox="0 0 20 20"><path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"/></svg>
+                                        <span>AoC 2023/15</span>
+                                    </div>
+                                </div>
+                                <div class="flex items-center gap-1.5 text-[#5c6b7d]">
+                                    <svg class="w-3.5 h-3.5 text-[#3d4a5c]" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M4 4a2 2 0 012-2h4.586A2 2 0 0112 2.586L15.414 6A2 2 0 0116 7.414V16a2 2 0 01-2 2H6a2 2 0 01-2-2V4z" clip-rule="evenodd"/></svg>
+                                    <span class="truncate">~/aoc/2023/day15.santa</span>
+                                </div>
+                            </div>
+                        </div>
+                        <button onclick="restartDemo('demo3')" class="demo-restart absolute top-4 right-4 p-2 rounded-lg bg-bg-elevated border border-border text-txt-muted hover:text-txt-primary transition-colors">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/></svg>
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Reindeer Showcase -->
+    <section id="reindeer" class="py-32">
+        <div class="max-w-7xl mx-auto px-6">
+            <div class="text-center mb-20 reveal">
+                <span class="text-accent font-semibold text-sm uppercase tracking-wider">Backend Implementations</span>
+                <h2 class="text-4xl md:text-5xl font-bold mt-4 text-txt-primary">Meet the Reindeer</h2>
+                <p class="text-txt-secondary mt-4 max-w-2xl mx-auto">Five different backend implementations, each with unique characteristics. Choose the right tool for your needs.</p>
+            </div>
+
+            <div class="grid md:grid-cols-2 lg:grid-cols-3 gap-6 stagger-children">
+                <!-- Comet -->
+                <a href="https://github.com/eddmann/santa-lang-comet" target="_blank" rel="noopener" class="reindeer-card relative bg-bg-surface border border-border rounded-2xl p-6 group">
+                    <div class="flex items-start justify-between mb-4">
+                        <div class="w-12 h-12 rounded-xl bg-gradient-to-br from-accent/20 to-accent/5 flex items-center justify-center">
+                            <span class="text-2xl">&#9732;</span>
+                        </div>
+                        <span class="px-2 py-1 text-xs font-medium rounded bg-orange-500/10 text-orange-400 border border-orange-500/20">Rust</span>
+                    </div>
+                    <h3 class="text-xl font-bold text-txt-primary mb-2 group-hover:text-accent transition-colors">Comet</h3>
+                    <p class="text-txt-secondary text-sm mb-4">Tree-walking interpreter. Great for learning and debugging with clear execution flow.</p>
+                    <div class="flex items-center gap-4 text-xs text-txt-muted">
+                        <span class="flex items-center gap-1">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"/></svg>
+                            Fast startup
+                        </span>
+                        <span class="flex items-center gap-1">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                            Stable
+                        </span>
+                    </div>
+                </a>
+
+                <!-- Blitzen -->
+                <a href="https://github.com/eddmann/santa-lang-blitzen" target="_blank" rel="noopener" class="reindeer-card relative bg-bg-surface border border-border rounded-2xl p-6 group">
+                    <div class="flex items-start justify-between mb-4">
+                        <div class="w-12 h-12 rounded-xl bg-gradient-to-br from-info/20 to-info/5 flex items-center justify-center">
+                            <span class="text-2xl">&#9889;</span>
+                        </div>
+                        <span class="px-2 py-1 text-xs font-medium rounded bg-orange-500/10 text-orange-400 border border-orange-500/20">Rust</span>
+                    </div>
+                    <h3 class="text-xl font-bold text-txt-primary mb-2 group-hover:text-info transition-colors">Blitzen</h3>
+                    <p class="text-txt-secondary text-sm mb-4">Bytecode virtual machine. Balanced performance with excellent compatibility.</p>
+                    <div class="flex items-center gap-4 text-xs text-txt-muted">
+                        <span class="flex items-center gap-1">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"/></svg>
+                            Optimized
+                        </span>
+                        <span class="flex items-center gap-1">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                            Portable
+                        </span>
+                    </div>
+                </a>
+
+                <!-- Dasher -->
+                <a href="https://github.com/eddmann/santa-lang-dasher" target="_blank" rel="noopener" class="reindeer-card relative bg-bg-surface border border-border rounded-2xl p-6 group">
+                    <div class="flex items-start justify-between mb-4">
+                        <div class="w-12 h-12 rounded-xl bg-gradient-to-br from-purple-500/20 to-purple-500/5 flex items-center justify-center">
+                            <span class="text-2xl">&#128640;</span>
+                        </div>
+                        <span class="px-2 py-1 text-xs font-medium rounded bg-orange-500/10 text-orange-400 border border-orange-500/20">Rust</span>
+                    </div>
+                    <h3 class="text-xl font-bold text-txt-primary mb-2 group-hover:text-purple-400 transition-colors">Dasher</h3>
+                    <p class="text-txt-secondary text-sm mb-4">LLVM native compiler. Maximum performance for computation-heavy puzzles.</p>
+                    <div class="flex items-center gap-4 text-xs text-txt-muted">
+                        <span class="flex items-center gap-1">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"/></svg>
+                            Fastest
+                        </span>
+                        <span class="flex items-center gap-1">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                            Native
+                        </span>
+                    </div>
+                </a>
+
+                <!-- Donner -->
+                <a href="https://github.com/eddmann/santa-lang-donner" target="_blank" rel="noopener" class="reindeer-card relative bg-bg-surface border border-border rounded-2xl p-6 group">
+                    <div class="flex items-start justify-between mb-4">
+                        <div class="w-12 h-12 rounded-xl bg-gradient-to-br from-cyan-500/20 to-cyan-500/5 flex items-center justify-center">
+                            <span class="text-2xl">&#9749;</span>
+                        </div>
+                        <span class="px-2 py-1 text-xs font-medium rounded bg-purple-500/10 text-purple-400 border border-purple-500/20">Kotlin</span>
+                    </div>
+                    <h3 class="text-xl font-bold text-txt-primary mb-2 group-hover:text-cyan-400 transition-colors">Donner</h3>
+                    <p class="text-txt-secondary text-sm mb-4">JVM bytecode compiler. Leverage the mature Java ecosystem and tooling.</p>
+                    <div class="flex items-center gap-4 text-xs text-txt-muted">
+                        <span class="flex items-center gap-1">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"/></svg>
+                            JIT optimized
+                        </span>
+                        <span class="flex items-center gap-1">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                            Cross-platform
+                        </span>
+                    </div>
+                </a>
+
+                <!-- Prancer -->
+                <a href="https://github.com/eddmann/santa-lang-prancer" target="_blank" rel="noopener" class="reindeer-card relative bg-bg-surface border border-border rounded-2xl p-6 group">
+                    <div class="flex items-start justify-between mb-4">
+                        <div class="w-12 h-12 rounded-xl bg-gradient-to-br from-yellow-500/20 to-yellow-500/5 flex items-center justify-center">
+                            <span class="text-2xl">&#127760;</span>
+                        </div>
+                        <span class="px-2 py-1 text-xs font-medium rounded bg-blue-500/10 text-blue-400 border border-blue-500/20">TypeScript</span>
+                    </div>
+                    <h3 class="text-xl font-bold text-txt-primary mb-2 group-hover:text-yellow-400 transition-colors">Prancer</h3>
+                    <p class="text-txt-secondary text-sm mb-4">JavaScript interpreter. Run santa-lang anywhere JavaScript runs.</p>
+                    <div class="flex items-center gap-4 text-xs text-txt-muted">
+                        <span class="flex items-center gap-1">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"/></svg>
+                            Universal
+                        </span>
+                        <span class="flex items-center gap-1">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                            Browser-ready
+                        </span>
+                    </div>
+                </a>
+
+                <!-- Coming Soon placeholder -->
+                <div class="relative bg-bg-surface/50 border border-dashed border-border rounded-2xl p-6 flex flex-col items-center justify-center text-center">
+                    <div class="w-12 h-12 rounded-xl bg-bg-elevated flex items-center justify-center mb-4">
+                        <svg class="w-6 h-6 text-txt-muted" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"/></svg>
+                    </div>
+                    <p class="text-txt-muted text-sm">More reindeer coming...</p>
+                    <p class="text-txt-faint text-xs mt-1">Contribute on GitHub</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Installation -->
+    <section id="install" class="py-32 bg-bg-surface relative overflow-hidden">
+        <div class="absolute inset-0">
+            <div class="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[800px] h-[800px] bg-accent/5 rounded-full filter blur-3xl"></div>
+        </div>
+
+        <div class="max-w-4xl mx-auto px-6 relative">
+            <div class="text-center mb-16 reveal">
+                <span class="text-accent font-semibold text-sm uppercase tracking-wider">Get Started</span>
+                <h2 class="text-4xl md:text-5xl font-bold mt-4 text-txt-primary">Install in seconds</h2>
+                <p class="text-txt-secondary mt-4">Available for macOS and Linux. Choose your preferred installation method.</p>
+            </div>
+
+            <div class="reveal">
+                <!-- Homebrew -->
+                <div class="gradient-border bg-bg rounded-2xl p-8 mb-6">
+                    <div class="flex items-center justify-between mb-4">
+                        <div class="flex items-center gap-3">
+                            <svg class="w-8 h-8 text-accent" viewBox="0 0 24 24" fill="currentColor">
+                                <path d="M5.556 3.012c-.789.168-1.346.395-1.75.72-.373.3-.556.64-.556 1.18v14.175c0 .54.183.88.556 1.18.404.326.961.553 1.75.72 1.577.337 3.858.513 6.444.513s4.867-.176 6.444-.512c.789-.168 1.346-.395 1.75-.72.373-.3.556-.64.556-1.181V4.913c0-.54-.183-.88-.556-1.18-.404-.326-.961-.553-1.75-.72C16.867 2.674 14.586 2.5 12 2.5s-4.867.175-6.444.512zm5.973 5.003l-3.285 9.36h1.828l.612-1.87h3.256l.59 1.87h1.912l-3.22-9.36zm.438 2.16l1.217 3.793h-2.495l1.278-3.793z"/>
+                            </svg>
+                            <div>
+                                <h3 class="font-bold text-txt-primary">Homebrew</h3>
+                                <p class="text-sm text-txt-muted">Recommended for macOS</p>
+                            </div>
+                        </div>
+                        <div class="flex gap-2">
+                            <span class="px-3 py-1 text-xs font-medium rounded-full bg-accent/10 text-accent border border-accent/20">macOS Intel</span>
+                            <span class="px-3 py-1 text-xs font-medium rounded-full bg-accent/10 text-accent border border-accent/20">macOS ARM</span>
+                        </div>
+                    </div>
+                    <div class="flex items-center gap-2 bg-bg-elevated rounded-xl p-4 font-mono text-sm">
+                        <span class="text-txt-muted select-none">$</span>
+                        <code id="brew-command" class="flex-1 text-txt-primary">brew install eddmann/tap/santa-lang-workbench</code>
+                        <button onclick="copyCommand()" id="copy-btn" class="copy-btn p-2 rounded-lg text-txt-muted hover:text-txt-primary transition-colors">
+                            <svg id="copy-icon" class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"/>
+                            </svg>
+                            <svg id="check-icon" class="w-5 h-5 hidden" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
+                            </svg>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Direct download -->
+                <div class="bg-bg rounded-2xl border border-border p-8">
+                    <div class="flex items-center justify-between mb-4">
+                        <div class="flex items-center gap-3">
+                            <svg class="w-8 h-8 text-info" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/>
+                            </svg>
+                            <div>
+                                <h3 class="font-bold text-txt-primary">Direct Download</h3>
+                                <p class="text-sm text-txt-muted">Download from GitHub Releases</p>
+                            </div>
+                        </div>
+                        <div class="flex gap-2">
+                            <span class="px-3 py-1 text-xs font-medium rounded-full bg-info/10 text-info border border-info/20">Linux</span>
+                            <span class="px-3 py-1 text-xs font-medium rounded-full bg-info/10 text-info border border-info/20">macOS</span>
+                        </div>
+                    </div>
+                    <div class="grid sm:grid-cols-2 gap-4">
+                        <a href="https://github.com/eddmann/santa-lang-workbench/releases" class="flex items-center gap-3 p-4 rounded-xl bg-bg-elevated border border-border hover:border-info transition-colors group">
+                            <svg class="w-10 h-10 text-txt-muted group-hover:text-info transition-colors" viewBox="0 0 24 24" fill="currentColor">
+                                <path d="M12 2C6.477 2 2 6.477 2 12c0 4.42 2.87 8.17 6.84 9.5.5.08.66-.23.66-.5v-1.69c-2.77.6-3.36-1.34-3.36-1.34-.46-1.16-1.11-1.47-1.11-1.47-.91-.62.07-.6.07-.6 1 .07 1.53 1.03 1.53 1.03.87 1.52 2.34 1.07 2.91.83.09-.65.35-1.09.63-1.34-2.22-.25-4.55-1.11-4.55-4.92 0-1.11.38-2 1.03-2.71-.1-.25-.45-1.29.1-2.64 0 0 .84-.27 2.75 1.02.79-.22 1.65-.33 2.5-.33.85 0 1.71.11 2.5.33 1.91-1.29 2.75-1.02 2.75-1.02.55 1.35.2 2.39.1 2.64.65.71 1.03 1.6 1.03 2.71 0 3.82-2.34 4.66-4.57 4.91.36.31.69.92.69 1.85V21c0 .27.16.59.67.5C19.14 20.16 22 16.42 22 12A10 10 0 0012 2z"/>
+                            </svg>
+                            <div>
+                                <p class="font-medium text-txt-primary group-hover:text-info transition-colors">GitHub Releases</p>
+                                <p class="text-xs text-txt-muted">.dmg, .deb, .AppImage</p>
+                            </div>
+                            <svg class="w-5 h-5 text-txt-muted ml-auto group-hover:text-info group-hover:translate-x-1 transition-all" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 8l4 4m0 0l-4 4m4-4H3"/>
+                            </svg>
+                        </a>
+                        <a href="https://eddmann.com/santa-lang/" class="flex items-center gap-3 p-4 rounded-xl bg-bg-elevated border border-border hover:border-accent transition-colors group">
+                            <svg class="w-10 h-10 text-txt-muted group-hover:text-accent transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"/>
+                            </svg>
+                            <div>
+                                <p class="font-medium text-txt-primary group-hover:text-accent transition-colors">Documentation</p>
+                                <p class="text-xs text-txt-muted">Learn santa-lang</p>
+                            </div>
+                            <svg class="w-5 h-5 text-txt-muted ml-auto group-hover:text-accent group-hover:translate-x-1 transition-all" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 8l4 4m0 0l-4 4m4-4H3"/>
+                            </svg>
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Footer -->
+    <footer class="py-16 border-t border-border">
+        <div class="max-w-7xl mx-auto px-6">
+            <div class="flex flex-col md:flex-row items-center justify-between gap-8">
+                <div class="flex items-center gap-3">
+                    <img src="logo.png" alt="santa-lang Workbench" class="w-8 h-8">
+                    <div>
+                        <p class="font-bold text-txt-primary">santa-lang Workbench</p>
+                        <p class="text-sm text-txt-muted">Built with care by <a href="https://eddmann.com" target="_blank" rel="noopener" class="text-accent hover:underline">Edd Mann</a></p>
+                    </div>
+                </div>
+
+                <div class="flex items-center gap-6">
+                    <a href="https://github.com/eddmann/santa-lang-workbench" target="_blank" rel="noopener" class="text-txt-muted hover:text-txt-primary transition-colors text-sm">GitHub</a>
+                    <a href="https://eddmann.com/santa-lang/" target="_blank" rel="noopener" class="text-txt-muted hover:text-txt-primary transition-colors text-sm">Documentation</a>
+                    <a href="https://github.com/eddmann/santa-lang-workbench/releases" target="_blank" rel="noopener" class="text-txt-muted hover:text-txt-primary transition-colors text-sm">Releases</a>
+                </div>
+
+                <div class="flex items-center gap-4">
+                    <span class="px-3 py-1 text-xs font-mono rounded-full bg-bg-elevated border border-border text-txt-muted">MIT License</span>
+                    <a href="https://github.com/eddmann/santa-lang-workbench" target="_blank" rel="noopener" class="text-txt-muted hover:text-txt-primary transition-colors">
+                        <svg class="w-6 h-6" fill="currentColor" viewBox="0 0 24 24"><path d="M12 0c-6.626 0-12 5.373-12 12 0 5.302 3.438 9.8 8.207 11.387.599.111.793-.261.793-.577v-2.234c-3.338.726-4.033-1.416-4.033-1.416-.546-1.387-1.333-1.756-1.333-1.756-1.089-.745.083-.729.083-.729 1.205.084 1.839 1.237 1.839 1.237 1.07 1.834 2.807 1.304 3.492.997.107-.775.418-1.305.762-1.604-2.665-.305-5.467-1.334-5.467-5.931 0-1.311.469-2.381 1.236-3.221-.124-.303-.535-1.524.117-3.176 0 0 1.008-.322 3.301 1.23.957-.266 1.983-.399 3.003-.404 1.02.005 2.047.138 3.006.404 2.291-1.552 3.297-1.23 3.297-1.23.653 1.653.242 2.874.118 3.176.77.84 1.235 1.911 1.235 3.221 0 4.609-2.807 5.624-5.479 5.921.43.372.823 1.102.823 2.222v3.293c0 .319.192.694.801.576 4.765-1.589 8.199-6.086 8.199-11.386 0-6.627-5.373-12-12-12z"/></svg>
+                    </a>
+                </div>
+            </div>
+
+            <div class="mt-12 pt-8 border-t border-border-subtle text-center">
+                <p class="text-xs text-txt-faint">
+                    Made for the <a href="https://adventofcode.com" target="_blank" rel="noopener" class="text-accent hover:underline">Advent of Code</a> community
+                </p>
+            </div>
+        </div>
+    </footer>
+
+    <script>
+        // Typing animation for hero
+        const phrases = [
+            'Solve Advent of Code puzzles',
+            'Compare multiple backends',
+            'Stream results in real-time',
+            'Format code with Tinsel'
+        ];
+        let phraseIndex = 0;
+        let charIndex = 0;
+        let isDeleting = false;
+        const typedText = document.getElementById('typed-text');
+
+        function type() {
+            const currentPhrase = phrases[phraseIndex];
+
+            if (isDeleting) {
+                typedText.textContent = currentPhrase.substring(0, charIndex - 1);
+                charIndex--;
+            } else {
+                typedText.textContent = currentPhrase.substring(0, charIndex + 1);
+                charIndex++;
+            }
+
+            let typeSpeed = isDeleting ? 30 : 50;
+
+            if (!isDeleting && charIndex === currentPhrase.length) {
+                typeSpeed = 2000;
+                isDeleting = true;
+            } else if (isDeleting && charIndex === 0) {
+                isDeleting = false;
+                phraseIndex = (phraseIndex + 1) % phrases.length;
+                typeSpeed = 500;
+            }
+
+            setTimeout(type, typeSpeed);
+        }
+
+        type();
+
+        // Copy command
+        function copyCommand() {
+            const command = document.getElementById('brew-command').textContent;
+            navigator.clipboard.writeText(command);
+
+            const btn = document.getElementById('copy-btn');
+            const copyIcon = document.getElementById('copy-icon');
+            const checkIcon = document.getElementById('check-icon');
+
+            btn.classList.add('copied');
+            copyIcon.classList.add('hidden');
+            checkIcon.classList.remove('hidden');
+
+            setTimeout(() => {
+                btn.classList.remove('copied');
+                copyIcon.classList.remove('hidden');
+                checkIcon.classList.add('hidden');
+            }, 2000);
+        }
+
+        // Restart demo animations
+        function restartDemo(demoId) {
+            const demo = document.getElementById(demoId);
+            const clone = demo.cloneNode(true);
+            demo.parentNode.replaceChild(clone, demo);
+        }
+
+        // Scroll reveal
+        const revealElements = document.querySelectorAll('.reveal, .stagger-children');
+
+        const revealObserver = new IntersectionObserver((entries) => {
+            entries.forEach(entry => {
+                if (entry.isIntersecting) {
+                    entry.target.classList.add('visible');
+                }
+            });
+        }, {
+            threshold: 0.1,
+            rootMargin: '0px 0px -50px 0px'
+        });
+
+        revealElements.forEach(el => revealObserver.observe(el));
+
+        // Smooth scroll for nav links
+        document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+            anchor.addEventListener('click', function (e) {
+                e.preventDefault();
+                const target = document.querySelector(this.getAttribute('href'));
+                if (target) {
+                    target.scrollIntoView({
+                        behavior: 'smooth',
+                        block: 'start'
+                    });
+                }
+            });
+        });
+    </script>
+</body>
+</html>
