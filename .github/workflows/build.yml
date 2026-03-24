@@ -19,7 +19,7 @@ jobs:
     steps:
       - name: Update release content
         id: update-release-content
-        uses: release-drafter/release-drafter@v6
+        uses: release-drafter/release-drafter@v7
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
